@@ -4,6 +4,7 @@ import hashlib
 from fnmatch import fnmatch
 import logging
 import winreg
+from re import compile
 from font_loader.ttf_parser import TTFFont
 
 def calculate_md5_for_file(path, block_size=2**20):
@@ -17,11 +18,11 @@ def calculate_md5_for_file(path, block_size=2**20):
     return md5.hexdigest()
 
 class FontInfo(object):
-    __slots__ = ['name', 'full_name', 'path', '__md5']
+    __slots__ = ['names', 'full_names', 'path', '__md5']
 
-    def __init__(self, name, full_name, path, md5):
-        self.name = name
-        self.full_name = full_name
+    def __init__(self, names, full_names, path, md5):
+        self.names = names
+        self.full_names = full_names
         self.path = path
         self.__md5 = md5
 
@@ -48,26 +49,27 @@ class FontLoader(object):
         for font_name in font_names:
             found_font = None
             for font in self.__fonts:
-                if font.name.startswith(font_name) or font.full_name.startswith(font_name):
-                    found_font = font
-                    break
+                for name in (font.names + font.full_names):
+                    if name.lower() == font_name.lower():
+                        found_font = font
+                        break
 
             if not found_font:
                 not_found.append(font_name)
-                logging.debug("Didn't find the font: %s" % font_name)
+                logging.debug("Font not found: %s" % font_name)
                 continue
 
             if found_font in found:
-                logging.debug("Font %s already existed" % found_font.name)
+                logging.debug("Font %s already exists" % found_font.name)
                 continue
 
             for already_added in found:
                 if already_added.md5 == found_font.md5:
-                    logging.debug("Found a duplicated font. Skipping.")
+                    logging.debug("Duplicate font found. Skipping.")
                     continue
 
             found.append(found_font)
-            logging.debug('Found the font: %s. File: %s' % (font_name, found_font.path))
+            logging.debug('Font found: %s. File: %s' % (font_name, found_font.path))
 
         return found, not_found
 
@@ -78,7 +80,7 @@ class FontLoader(object):
         for file_name in files:
             file_path = os.path.join(path, file_name)
             font_file = TTFFont(file_path)
-            fonts.append(FontInfo(font_file.get_name(), font_file.get_full_name(), file_path, None))
+            fonts.append(FontInfo(font_file.get_names(), font_file.get_full_names(), file_path, None))
         return fonts
 
     def __load_system_fonts(self):
@@ -88,7 +90,9 @@ class FontLoader(object):
             for index in range(info[1]):
                 value = winreg.EnumValue(key, index)
                 path = value[1] if os.path.isabs(value[1]) else "%SystemRoot%\\Fonts\\" + value[1]
-                font_info = FontInfo(value[0], value[0], path, None)
+                font_name_regex = compile(r'\s\(.*\)$')
+                font_name = font_name_regex.sub('',value[0])
+                font_info = FontInfo([font_name], [font_name], path, None)
                 system_fonts.append(font_info)
             return system_fonts
 

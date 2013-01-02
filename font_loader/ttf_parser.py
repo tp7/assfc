@@ -1,7 +1,6 @@
 from collections import namedtuple
 import logging
 import struct
-import binascii
 
 OffsetTable = namedtuple('OffsetTable', ['version', 'num_tables', 'search_range', 'entry_selector', 'range_shift'])
 TableDirectory = namedtuple('TableDirectory', ['tag', 'check_sum', 'offset', 'length'])
@@ -46,6 +45,8 @@ class TTFFont(object):
         self.__bold = False
         self.__regular = False
         self.__italic = False
+        self.__names = []
+        self.__full_names = []
         self.parse(path)
 
     def parse(self, path):
@@ -69,7 +70,6 @@ class TTFFont(object):
                     data = struct.unpack('>HHHHHH', file.read(12))
                     names.append(NameRecord(data[0], data[1], data[2], data[3], data[4], data[5]))
 
-                random_field_I_do_not_yet_understand_what_for = 0
                 for name in names:
                     file.seek(table_directory.offset + naming_table.offset_start_of_string_storage + name.offset_from_storage_area)
                     size = int(name.string_length)
@@ -77,29 +77,28 @@ class TTFFont(object):
                         value = struct.unpack('>' + str(size)+'s', file.read(size))[0].decode('utf-16be')
 
                     elif name.platform_id == 2:
-                        binary_value = struct.unpack('>' + str(size)+'s', file.read(size))[0]
-                        value = binary_value.decode(self.platform_id_2_encodings[name.encoding_id])
+                        value = struct.unpack('>' + str(size)+'s', file.read(size))[0].decode(self.platform_id_2_encodings[name.encoding_id])
 
                     elif name.platform_id == 1:
                         #this is probably 'a bit' broken
                         value = struct.unpack('>' + str(size)+'s', file.read(size))[0].decode('ISO 8859-1')
                     else:
-                        logging.debug("Error while loading script %s. Name data: %s" % (path, str(name)))
+                        logging.debug("Error while parsing font file %s. Name data: %s" % (path, str(name)))
                         value = ''
                     self.__set_name_by_id(name.name_id, value)
-                    random_field_I_do_not_yet_understand_what_for |= 1 << name.name_id
-                    if random_field_I_do_not_yet_understand_what_for == 0xFF:
-                        break
                 return
 
     def __set_name_by_id(self, id, value):
         if id is self.TTFNameId.FontFamilyName:
-            self.__name = value
+            self.__names.append(value)
         elif id is self.TTFNameId.FullFontName:
-            self.__full_name = value
+            self.__full_names.append(value)
         elif id is self.TTFNameId.FontSubFamilyName:
             self.__parse_styles(value)
-        self.headers[id] = value
+
+        if id not in self.headers:
+            self.headers[id] = []
+        self.headers[id].append(value)
 
     def __parse_styles(self, sub_family_name):
         name = sub_family_name.lower()
@@ -110,11 +109,11 @@ class TTFFont(object):
         if name.find('regular') is not -1 or name.find('normal') is not -1 or name.find('standard') is not -1:
             self.__regular = True
 
-    def get_name(self):
-        return self.__name
+    def get_names(self):
+        return self.__names
 
-    def get_full_name(self):
-        return self.__full_name
+    def get_full_names(self):
+        return self.__full_names
 
     def is_bold(self):
         return self.__bold
