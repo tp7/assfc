@@ -6,14 +6,29 @@ import logging
 import winreg
 from font_loader.ttf_parser import TTFFont
 
+def calculate_md5_for_file(path, block_size=2**20):
+    md5 = hashlib.md5()
+    with open(path, 'rb') as file:
+        while True:
+            data = file.read(block_size)
+            if not data:
+                break
+            md5.update(data)
+    return md5.hexdigest()
+
 class FontInfo(object):
-    __slots__ = ['name', 'full_name', 'path', 'md5']
+    __slots__ = ['name', 'full_name', 'path', '__md5']
 
     def __init__(self, name, full_name, path, md5):
         self.name = name
         self.full_name = full_name
         self.path = path
-        self.md5 = md5
+        self.__md5 = md5
+
+    def md5(self):
+        if not self.__md5:
+            self.__md5 = calculate_md5_for_file(self.path)
+        return self.__md5
 
 
 class FontLoader(object):
@@ -46,9 +61,6 @@ class FontLoader(object):
                 logging.debug("Font %s already existed" % found_font.name)
                 continue
 
-            if not found_font.md5:
-                found_font.md5 = self.__md5_for_file(found_font.path)
-
             for already_added in found:
                 if already_added.md5 == found_font.md5:
                     logging.debug("Found a duplicated font. Skipping.")
@@ -61,36 +73,24 @@ class FontLoader(object):
 
 
     def load_fonts_in_directory(self, path):
-        files = listdir(path)
-        files = filter(lambda x: fnmatch(x, '*.ttf') or fnmatch(x, '*.otf') ,files )
+        files = filter(lambda x: fnmatch(x, '*.ttf') or fnmatch(x, '*.otf'), listdir(path) )
         fonts = []
         for file_name in files:
-            file_path =  os.path.join(path, file_name)
+            file_path = os.path.join(path, file_name)
             font_file = TTFFont(file_path)
-#            logging.debug('loaded font %s' % font_file.get_name())
             fonts.append(FontInfo(font_file.get_name(), font_file.get_full_name(), file_path, None))
         return fonts
 
     def __load_system_fonts(self):
-        key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Fonts\\")
-        system_fonts = []
-        try:
+        with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Fonts\\") as key:
+            system_fonts = []
             info = winreg.QueryInfoKey(key)
             for index in range(info[1]):
                 value = winreg.EnumValue(key, index)
-                font_info = FontInfo(value[0], value[0], "C:\\Windows\\Fonts\\" + value[1], None)
+                path = value[1] if os.path.isabs(value[1]) else "%SystemRoot%\\Fonts\\" + value[1]
+                font_info = FontInfo(value[0], value[0], path, None)
                 system_fonts.append(font_info)
-        finally:
-            winreg.CloseKey(key)
-        return system_fonts
+            return system_fonts
 
 
-    def __md5_for_file(self, path, block_size=2**20):
-        md5 = hashlib.md5()
-        with open(path, 'rb') as file:
-            while True:
-                data = file.read(block_size)
-                if not data:
-                    break
-                md5.update(data)
-        return md5.hexdigest()
+

@@ -2,8 +2,8 @@ import logging
 from re import compile
 
 class AssParser(object):
-    global_fonts_regex = compile("Style:[^,\\n]+?,([^,]+)")
-    local_fonts_regex = compile("Dialogue:.+?\\\\fn([^\\\\}]+)")
+    global_fonts_regex = compile(r"Style:[^,\n]+?,\s*([^,]+)\s*,")
+    local_fonts_regex = compile(r"Dialogue:.+?\\fn([^\\}]+)")
 
     def __init__(self, script_path):
         self.__load_script(script_path)
