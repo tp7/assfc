@@ -33,3 +33,4 @@ class TTCFont(object):
 
     def get_full_names(self):
         return self.__full_names
+

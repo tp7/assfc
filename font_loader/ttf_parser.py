@@ -124,3 +124,4 @@ class TTFFont(object):
 
     def is_italic(self):
         return self.__italic
+

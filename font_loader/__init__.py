@@ -76,17 +76,11 @@ class FontLoader(object):
 
 
     def load_fonts_in_directory(self, path):
-        files = filter(lambda x: fnmatch(x, '*.ttf') or fnmatch(x, '*.otf'), listdir(path) )
+        files = filter(lambda x: fnmatch(x, '*.ttf') or fnmatch(x, '*.otf') or fnmatch(x, '*.ttc'), listdir(path) )
         fonts = []
         for file_name in files:
             file_path = os.path.join(path, file_name)
-            font_file = TTFFont(file_path)
-            fonts.append(FontInfo(font_file.get_names(), font_file.get_full_names(), file_path, None))
-
-        files = filter(lambda x: fnmatch(x, '*.ttc'), listdir(path) )
-        for file_name in files:
-            file_path = os.path.join(path, file_name)
-            font_file = TTCFont(file_path)
+            font_file = TTCFont(file_path) if fnmatch(file_path, '*.ttc') else TTFFont(file_path)
             fonts.append(FontInfo(font_file.get_names(), font_file.get_full_names(), file_path, None))
         return fonts
 
