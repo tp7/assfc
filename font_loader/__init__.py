@@ -6,6 +6,7 @@ import logging
 import winreg
 from re import compile
 from font_loader.ttf_parser import TTFFont
+from font_loader.ttc_parser import TTCFont
 
 def calculate_md5_for_file(path, block_size=2**20):
     md5 = hashlib.md5()
@@ -80,6 +81,12 @@ class FontLoader(object):
         for file_name in files:
             file_path = os.path.join(path, file_name)
             font_file = TTFFont(file_path)
+            fonts.append(FontInfo(font_file.get_names(), font_file.get_full_names(), file_path, None))
+
+        files = filter(lambda x: fnmatch(x, '*.ttc'), listdir(path) )
+        for file_name in files:
+            file_path = os.path.join(path, file_name)
+            font_file = TTCFont(file_path)
             fonts.append(FontInfo(font_file.get_names(), font_file.get_full_names(), file_path, None))
         return fonts
 

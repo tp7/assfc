@@ -40,17 +40,18 @@ class TTFFont(object):
         WWSFamilyName = 21
         WWSSubfamilyName = 22
 
-    def __init__(self, path):
+    def __init__(self, path, offset=0):
         self.headers = {}
         self.__bold = False
         self.__regular = False
         self.__italic = False
         self.__names = []
         self.__full_names = []
-        self.parse(path)
+        self.parse(path, offset)
 
-    def parse(self, path):
+    def parse(self, path, offset):
         with open(path,'rb') as file:
+            file.seek(offset)
             data =  struct.unpack('>IHHHH', file.read(12))
             offset_table = OffsetTable(data[0], data[1], data[2], data[3], data[4])
 
