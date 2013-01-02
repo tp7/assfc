@@ -51,7 +51,7 @@ class FontLoader(object):
             found_font = None
             for font in self.__fonts:
                 for name in (font.names + font.full_names):
-                    if name.lower() == font_name.lower():
+                    if name.lower().find(font_name.lower()) != -1:
                         found_font = font
                         break
 
@@ -91,9 +91,7 @@ class FontLoader(object):
             for index in range(info[1]):
                 value = winreg.EnumValue(key, index)
                 path = value[1] if os.path.isabs(value[1]) else "%SystemRoot%\\Fonts\\" + value[1]
-                font_name_regex = compile(r'\s\(.*\)$')
-                font_name = font_name_regex.sub('',value[0])
-                font_info = FontInfo([font_name], [font_name], path, None)
+                font_info = FontInfo((value[0],), (value[0],), path, None)
                 system_fonts.append(font_info)
             return system_fonts
 
