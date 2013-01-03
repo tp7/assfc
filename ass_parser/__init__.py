@@ -17,7 +17,7 @@ class AssParser(object):
         global_fonts = self.global_fonts_regex.findall(script)
         local_fonts = self.local_fonts_regex.findall(script)
         global_fonts.extend(local_fonts)
-        self.fonts = list(set(global_fonts))
+        self.__fonts = list(set(global_fonts))
 
     def get_fonts(self):
-        return self.fonts
+        return self.__fonts

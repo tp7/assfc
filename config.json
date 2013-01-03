@@ -1,5 +1,6 @@
 {
     "font_dirs":[
     ],
-    "log_file":null
+    "log_file":null,
+    "mmg":"C:\\Program Files (x86)\\MKVtoolnix\\mmg.exe"
 }

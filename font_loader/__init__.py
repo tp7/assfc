@@ -57,16 +57,16 @@ class FontLoader(object):
 
             if not found_font:
                 not_found.append(font_name)
-                logging.debug("Font not found: %s" % font_name)
+                logging.warning("Font not found: %s" % font_name)
                 continue
 
             if found_font in found:
-                logging.debug("Font %s already exists" % found_font.name)
+                logging.debug("Font %s already exists" % found_font.names[0])
                 continue
 
             for already_added in found:
                 if already_added.md5 == found_font.md5:
-                    logging.debug("Duplicate font found. Skipping.")
+                    logging.info("Duplicate font found. Skipping.")
                     continue
 
             found.append(found_font)
