@@ -49,7 +49,7 @@ def create_mmg_command(mmg_path, output_path, script_path, fonts):
     command = '{0} -o "{1}" --no-track-tags --no-global-tags "{2}" --language 0:eng "{3}" {4}'.format(
         os.path.abspath(mmg_path), output_path, output_path,os.path.abspath(script_path), attachment_string
     )
-    logging.debug(command)
+    return command
 
 
 def process(args):

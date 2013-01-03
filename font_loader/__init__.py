@@ -27,6 +27,7 @@ class FontInfo(object):
         self.path = path
         self.__md5 = md5
 
+    @property
     def md5(self):
         if not self.__md5:
             self.__md5 = calculate_md5_for_file(self.path)
