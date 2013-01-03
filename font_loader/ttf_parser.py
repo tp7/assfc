@@ -1,6 +1,7 @@
 from collections import namedtuple
 import logging
 import struct
+from font_loader.font_info import FontInfo
 
 OffsetTable = namedtuple('OffsetTable', ['version', 'num_tables', 'search_range', 'entry_selector', 'range_shift'])
 TableDirectory = namedtuple('TableDirectory', ['tag', 'check_sum', 'offset', 'length'])
@@ -42,12 +43,11 @@ class TTFFont(object):
 
     def __init__(self, path, offset=0):
         self.headers = {}
-        self.__bold = False
-        self.__regular = False
-        self.__italic = False
+        self.__styles = set()
         self.__names = set()
         self.__full_names = set()
-        self.parse(path, offset)
+        self.__path = path
+        self.parse(self.__path, offset)
 
     def parse(self, path, offset):
         with open(path,'rb') as file:
@@ -104,24 +104,12 @@ class TTFFont(object):
     def __parse_styles(self, sub_family_name):
         name = sub_family_name.lower()
         if name.find('bold') is not -1:
-            self.__bold = True
+            self.__styles.add(FontInfo.FontStyle.Bold)
         if name.find('italic') is not -1:
-            self.__italic = True
+            self.__styles.add(FontInfo.FontStyle.Italic)
         if name.find('regular') is not -1 or name.find('normal') is not -1 or name.find('standard') is not -1:
-            self.__regular = True
+            self.__styles.add(FontInfo.FontStyle.Regular)
 
-    def get_names(self):
-        return list(self.__names)
-
-    def get_full_names(self):
-        return list(self.__names)
-
-    def is_bold(self):
-        return self.__bold
-
-    def is_regular(self):
-        return self.__regular
-
-    def is_italic(self):
-        return self.__italic
+    def get_info(self):
+        return FontInfo(list(self.__names), list(self.__full_names), list(self.__styles), self.__path, None)
 

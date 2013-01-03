@@ -1,37 +1,11 @@
 from os import listdir
 import os
-import hashlib
 from fnmatch import fnmatch
 import logging
 import winreg
+from font_loader.font_info import FontInfo
 from font_loader.ttf_parser import TTFFont
 from font_loader.ttc_parser import TTCFont
-
-def calculate_md5_for_file(path, block_size=2**20):
-    md5 = hashlib.md5()
-    with open(path, 'rb') as file:
-        while True:
-            data = file.read(block_size)
-            if not data:
-                break
-            md5.update(data)
-    return md5.hexdigest()
-
-class FontInfo(object):
-    __slots__ = ['names', 'full_names', 'path', '__md5']
-
-    def __init__(self, names, full_names, path, md5):
-        self.names = names
-        self.full_names = full_names
-        self.path = path
-        self.__md5 = md5
-
-    @property
-    def md5(self):
-        if not self.__md5:
-            self.__md5 = calculate_md5_for_file(self.path)
-        return self.__md5
-
 
 class FontLoader(object):
     def __init__(self, font_dirs = None, load_system_fonts = True):
@@ -80,8 +54,12 @@ class FontLoader(object):
         fonts = []
         for file_name in files:
             file_path = os.path.join(path, file_name)
-            font_file = TTCFont(file_path) if fnmatch(file_path, '*.ttc') else TTFFont(file_path)
-            fonts.append(FontInfo(font_file.get_names(), font_file.get_full_names(), file_path, None))
+            if fnmatch(file_path, '*.ttc'):
+                font_file = TTCFont(file_path)
+                fonts.extend(font_file.get_info())
+            else:
+                font_file = TTFFont(file_path)
+                fonts.append(font_file.get_info())
         return fonts
 
     def __load_system_fonts(self):
@@ -90,8 +68,8 @@ class FontLoader(object):
             info = winreg.QueryInfoKey(key)
             for index in range(info[1]):
                 value = winreg.EnumValue(key, index)
-                path = value[1] if os.path.isabs(value[1]) else "%SystemRoot%\\Fonts\\" + value[1]
-                font_info = FontInfo((value[0],), (value[0],), path, None)
+                path = value[1] if os.path.isabs(value[1]) else "C:\\Windows\\Fonts\\" + value[1]
+                font_info = FontInfo((value[0],), (value[0],), None, path, None)
                 system_fonts.append(font_info)
             return system_fonts
 
