@@ -1,4 +1,3 @@
-import logging
 from re import compile
 
 class AssParser(object):

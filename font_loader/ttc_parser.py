@@ -8,8 +8,8 @@ TTCHeader = namedtuple('TTCHeader', ['tag','version','num_fonts'])
 class TTCFont(object):
 
     def __init__(self, path):
-        self.__names = []
-        self.__full_names = []
+        self.__names = set()
+        self.__full_names = set()
         self.parse(path)
 
     def parse(self, path):
@@ -25,12 +25,12 @@ class TTCFont(object):
 
         for offset in ttf_offsets:
             ttf_font = TTFFont(path, offset)
-            self.__names.extend(ttf_font.get_names())
-            self.__full_names.extend(ttf_font.get_full_names())
+            self.__names.update(ttf_font.get_names())
+            self.__full_names.update(ttf_font.get_full_names())
 
     def get_names(self):
-        return self.__names
+        return list(self.__names)
 
     def get_full_names(self):
-        return self.__full_names
+        return list(self.__full_names)
 

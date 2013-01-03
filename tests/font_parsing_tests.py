@@ -1,8 +1,47 @@
+import logging
 import unittest
-from font_loader import TTFFont, FontInfo
+from font_loader import TTFFont, FontInfo, FontLoader, TTCFont
 from tests.common import get_file_in_test_directory
 
-class FontParsingTests(unittest.TestCase):
+class FontLoaderTests(unittest.TestCase):
+    def setUp(self):
+        logging.disable(logging.WARNING)
+
+    def tearDown(self):
+        logging.disable(logging.NOTSET)
+
+    def test_returns_all_not_found_fonts(self):
+        loader = FontLoader(None, False)
+        found, not_found = loader.get_fonts_for_list(['Jorvik Informal V2', 'Random font'])
+        self.assertEqual(2, len(not_found))
+
+    def test_returns_all_found_fonts(self):
+        loader = FontLoader([get_file_in_test_directory('')], False)
+        found, not_found = loader.get_fonts_for_list(['Jorvik Informal V2', 'Random font'])
+        self.assertEqual(1, len(found))
+        self.assertIn('Jorvik Informal V2', found[0].names)
+
+    def test_performs_case_insensitive_search(self):
+        loader = FontLoader([get_file_in_test_directory('')], False)
+        found, not_found = loader.get_fonts_for_list(['JoRvIk INFormAl v2'])
+        self.assertEqual(1, len(found))
+
+    def test_does_not_require_full_match(self):
+        loader = FontLoader([get_file_in_test_directory('')], False)
+        found, not_found = loader.get_fonts_for_list(['Jorvik'])
+        self.assertEqual(1, len(found))
+
+    def test_does_not_add_same_font_twice(self):
+        loader = FontLoader([get_file_in_test_directory(''), get_file_in_test_directory('')], False)
+        found, not_found = loader.get_fonts_for_list(['Jorvik', 'Jorvik informal'])
+        self.assertEqual(1, len(found))
+
+    def test_loads_at_least_some_system_fonts(self):
+        loader = FontLoader(None, True)
+        self.assertTrue(len(loader.fonts) > 0)
+
+
+class TTFFontTests(unittest.TestCase):
     def test_ttf_name_matches(self):
         font = TTFFont(get_file_in_test_directory('seriously.ttf'))
         self.assertIn('Seriously', font.get_names())
@@ -29,6 +68,12 @@ class FontParsingTests(unittest.TestCase):
         font = TTFFont(get_file_in_test_directory('CaviarDreams_BoldItalic.ttf'))
         self.assertTrue(font.is_italic())
         self.assertTrue(font.is_bold())
+
+class TTCFontTests(unittest.TestCase):
+    def test_contains_all_names(self):
+        font = TTCFont(get_file_in_test_directory('jorvik_and_seriously.ttc'))
+        self.assertIn('Seriously', font.get_names())
+        self.assertIn('Jorvik Informal V2', font.get_names())
 
 
 class FontInfoTests(unittest.TestCase):

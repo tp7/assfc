@@ -45,8 +45,8 @@ class TTFFont(object):
         self.__bold = False
         self.__regular = False
         self.__italic = False
-        self.__names = []
-        self.__full_names = []
+        self.__names = set()
+        self.__full_names = set()
         self.parse(path, offset)
 
     def parse(self, path, offset):
@@ -91,9 +91,9 @@ class TTFFont(object):
 
     def __set_name_by_id(self, id, value):
         if id is self.TTFNameId.FontFamilyName:
-            self.__names.append(value)
+            self.__names.add(value)
         elif id is self.TTFNameId.FullFontName:
-            self.__full_names.append(value)
+            self.__full_names.add(value)
         elif id is self.TTFNameId.FontSubFamilyName:
             self.__parse_styles(value)
 
@@ -111,10 +111,10 @@ class TTFFont(object):
             self.__regular = True
 
     def get_names(self):
-        return self.__names
+        return list(self.__names)
 
     def get_full_names(self):
-        return self.__full_names
+        return list(self.__names)
 
     def is_bold(self):
         return self.__bold

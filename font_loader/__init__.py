@@ -4,7 +4,6 @@ import hashlib
 from fnmatch import fnmatch
 import logging
 import winreg
-from re import compile
 from font_loader.ttf_parser import TTFFont
 from font_loader.ttc_parser import TTCFont
 
@@ -96,5 +95,6 @@ class FontLoader(object):
                 system_fonts.append(font_info)
             return system_fonts
 
-
-
+    @property
+    def fonts(self):
+        return self.__fonts
