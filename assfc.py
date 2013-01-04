@@ -7,12 +7,6 @@ from font_loader import FontLoader
 import os
 from json import JSONDecoder
 
-MIME_TYPES = {
-    '.otf':'application/x-truetype-font',
-    '.ttf':'application/x-truetype-font',
-    '.ttc':'application/octet-stream'
-}
-
 class Config(object):
     def __init__(self, dict):
         self.__dict__.update(dict)
@@ -39,17 +33,9 @@ def set_logging(log_file):
         logging.getLogger('').addHandler(console)
 
 def create_mmg_command(mmg_path, output_path, script_path, fonts):
-    font_list = []
-    for font in fonts:
-        basename = os.path.basename(font.path)
-        mime = MIME_TYPES.get(os.path.splitext(basename)[1].lower(), 'application/octet-stream')
-        font_list.append('--attachment-mime-type %s --attachment-name "%s" --attach-file "%s"' % (mime, basename, font.path))
-
+    font_list = ('--attachment-mime-type application/x-truetype-font --attachment-name "{0}" --attach-file "{1}"'.format(os.path.basename(font.path), font.path) for font in fonts)
     attachment_string = ' '.join(font_list)
-    command = '{0} -o "{1}" --no-track-tags --no-global-tags "{2}" --language 0:eng "{3}" {4}'.format(
-        os.path.abspath(mmg_path), output_path, output_path,os.path.abspath(script_path), attachment_string
-    )
-    return command
+    return '{0} -o "{1}" "{2}" {4}'.format(os.path.abspath(mmg_path), os.path.abspath(output_path), os.path.abspath(script_path), attachment_string)
 
 
 def process(args):
