@@ -1,7 +1,7 @@
 import logging
 import unittest
 from functools import reduce
-from font_loader import TTFFont, FontInfo, FontLoader, TTCFont
+from font_loader import TTFFont, FontInfo, FontLoader, TTCFont, FontStyle
 from tests.common import get_file_in_test_directory
 
 class FontLoaderTests(unittest.TestCase):
@@ -57,22 +57,21 @@ class TTFFontTests(unittest.TestCase):
 
     def test_detects_italic_only_font(self):
         font = TTFFont(get_file_in_test_directory('CaviarDreams_Italic.ttf'))
-        self.assertIn(FontInfo.FontStyle.Italic, font.get_info().styles)
+        self.assertTrue(font.get_info().styles.has_flag(FontStyle.Italic))
 
     def test_detects_bold_only_font(self):
         font = TTFFont(get_file_in_test_directory('Caviar Dreams Bold.ttf'))
-        self.assertIn(FontInfo.FontStyle.Bold, font.get_info().styles)
+        self.assertTrue(font.get_info().styles.has_flag(FontStyle.Bold))
 
     def test_detects_italic_bold_font(self):
         font = TTFFont(get_file_in_test_directory('CaviarDreams_BoldItalic.ttf'))
-        self.assertIn(FontInfo.FontStyle.Italic, font.get_info().styles)
-        self.assertIn(FontInfo.FontStyle.Bold, font.get_info().styles)
+        self.assertTrue(font.get_info().styles.has_flag(FontStyle.Italic | FontStyle.Bold))
 
 class TTCFontTests(unittest.TestCase):
     def test_contains_all_names(self):
         font = TTCFont(get_file_in_test_directory('jorvik_and_seriously.ttc'))
-        self.assertIn('Seriously', reduce(lambda names, info: names + info.names, font.get_info(), []))
-        self.assertIn('Jorvik Informal V2', reduce(lambda names, info: names + info.names, font.get_info(), []))
+        self.assertIn('Seriously', reduce(lambda names, info: names + info.names, font.get_infos(), []))
+        self.assertIn('Jorvik Informal V2', reduce(lambda names, info: names + info.names, font.get_infos(), []))
 
 
 class FontInfoTests(unittest.TestCase):

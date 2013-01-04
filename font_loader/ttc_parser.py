@@ -26,5 +26,6 @@ class TTCFont(object):
             ttf_font = TTFFont(path, offset)
             self.__info.append(ttf_font.get_info())
 
-    def get_info(self):
+    def get_infos(self):
         return self.__info
+

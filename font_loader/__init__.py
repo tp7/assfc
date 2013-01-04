@@ -3,7 +3,7 @@ import os
 from fnmatch import fnmatch
 import logging
 import winreg
-from font_loader.font_info import FontInfo
+from font_loader.font_info import FontInfo, FontStyle
 from font_loader.ttf_parser import TTFFont
 from font_loader.ttc_parser import TTCFont
 
@@ -56,7 +56,7 @@ class FontLoader(object):
             file_path = os.path.join(path, file_name)
             if fnmatch(file_path, '*.ttc'):
                 font_file = TTCFont(file_path)
-                fonts.extend(font_file.get_info())
+                fonts.extend(font_file.get_infos())
             else:
                 font_file = TTFFont(file_path)
                 fonts.append(font_file.get_info())
