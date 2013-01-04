@@ -3,6 +3,7 @@ import os
 from fnmatch import fnmatch
 import logging
 import winreg
+import win32gui
 from font_loader.font_info import FontInfo, FontStyle
 from font_loader.ttf_parser import TTFFont
 from font_loader.ttc_parser import TTCFont
@@ -25,7 +26,7 @@ class FontLoader(object):
             found_font = None
             for font in self.__fonts:
                 for name in (font.names + font.full_names):
-                    if name.lower().find(font_name.lower()) != -1:
+                    if name.lower() == font_name.lower():
                         found_font = font
                         break
 
@@ -63,15 +64,9 @@ class FontLoader(object):
         return fonts
 
     def __load_system_fonts(self):
-        with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Fonts\\") as key:
-            system_fonts = []
-            info = winreg.QueryInfoKey(key)
-            for index in range(info[1]):
-                value = winreg.EnumValue(key, index)
-                path = value[1] if os.path.isabs(value[1]) else "C:\\Windows\\Fonts\\" + value[1]
-                font_info = FontInfo((value[0],), (value[0],), None, path, None)
-                system_fonts.append(font_info)
-            return system_fonts
+        return self.load_fonts_in_directory(os.environ['SYSTEMROOT'] + '\\Fonts')
+
+
 
     @property
     def fonts(self):

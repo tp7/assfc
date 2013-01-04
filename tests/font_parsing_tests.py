@@ -27,11 +27,6 @@ class FontLoaderTests(unittest.TestCase):
         found, not_found = loader.get_fonts_for_list(['JoRvIk INFormAl v2'])
         self.assertEqual(1, len(found))
 
-    def test_does_not_require_full_match(self):
-        loader = FontLoader([get_file_in_test_directory('')], False)
-        found, not_found = loader.get_fonts_for_list(['Jorvik'])
-        self.assertEqual(1, len(found))
-
     def test_does_not_add_same_font_twice(self):
         loader = FontLoader([get_file_in_test_directory(''), get_file_in_test_directory('')], False)
         found, not_found = loader.get_fonts_for_list(['Jorvik', 'Jorvik informal'])
@@ -40,6 +35,11 @@ class FontLoaderTests(unittest.TestCase):
     def test_loads_at_least_some_system_fonts(self):
         loader = FontLoader(None, True)
         self.assertTrue(len(loader.fonts) > 0)
+
+    def test_finds_3_different_arials_correctly_as_distinct_fonts(self):
+        loader = FontLoader(None, True)
+        found, not_found = loader.get_fonts_for_list(['Arial', 'Arial Black', 'Arial Unicode MS'])
+        self.assertEqual(3, len(found))
 
 
 class TTFFontTests(unittest.TestCase):

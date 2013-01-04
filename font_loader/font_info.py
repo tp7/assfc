@@ -50,7 +50,7 @@ def flag_enum(name, *names):
         attrs[n] = EnumElement([n])
     return type(name, (EnumBase,), attrs)
 
-FontStyle = flag_enum('FontStyle', 'Undefined','Regular','Bold','Italic')
+FontStyle = flag_enum('FontStyle', 'Regular','Bold','Italic')
 
 class FontInfo(object):
     __slots__ = ['names', 'full_names', 'styles', 'path', '__md5']

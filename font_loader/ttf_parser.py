@@ -43,7 +43,7 @@ class TTFFont(object):
 
     def __init__(self, path, offset=0):
         self.headers = {}
-        self.__styles = FontStyle.Undefined
+        self.__styles = frozenset()
         self.__names = set()
         self.__full_names = set()
         self.__path = path
