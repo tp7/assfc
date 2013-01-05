@@ -1,7 +1,8 @@
 import hashlib
 import os
 import sys
-
+from ctypes import windll, wintypes, byref
+from time import time
 
 class cached_property(object):
     def __init__(self, func, name=None, doc=None):
@@ -19,7 +20,6 @@ class cached_property(object):
             obj.__dict__[self.__name__] = value
         return value
 
-
 def calculate_md5_for_file(path, block_size=2**20):
     md5 = hashlib.md5()
     with open(path, 'rb') as file:
@@ -29,6 +29,44 @@ def calculate_md5_for_file(path, block_size=2**20):
                 break
             md5.update(data)
     return md5.hexdigest()
+
+def enumerate_files_in_directory(directory):
+    files = []
+    windows_enumerate_directory(directory, files)
+    return files
+
+def windows_enumerate_directory(directory, files):
+    FILE_ATTRIBUTE_DIRECTORY = 0x10
+    INVALID_HANDLE_VALUE = -1
+    BAN = (u'.', u'..')
+
+    FindFirstFile = windll.kernel32.FindFirstFileW
+    FindNextFile  = windll.kernel32.FindNextFileW
+    FindClose     = windll.kernel32.FindClose
+
+    out  = wintypes.WIN32_FIND_DATAW()
+    fldr = FindFirstFile(os.path.join(directory, "*"), byref(out))
+
+    if fldr == INVALID_HANDLE_VALUE:
+        raise ValueError("invalid handle!")
+    try:
+        while True:
+            if out.cFileName not in BAN:
+                isdir = out.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY
+
+                if isdir:
+                    windows_enumerate_directory(os.path.join(directory, out.cFileName), files)
+                else:
+                    ts = out.ftLastWriteTime
+                    timestamp = (ts.dwLowDateTime << 32) | ts.dwHighDateTime
+                    size = out.nFileSizeLow
+                    path = os.path.join(directory, out.cFileName)
+                    files.append({'path': path, 'size': size, 'mod_date':timestamp})
+            if not FindNextFile(fldr, byref(out)):
+                break
+    finally:
+        FindClose(fldr)
+
 
 
 def flag_enum(name, *names):

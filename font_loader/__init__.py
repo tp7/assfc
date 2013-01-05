@@ -6,11 +6,10 @@ import sys
 from font_loader.font_info import FontInfo, FontStyle
 from font_loader.ttf_parser import TTFFont
 from font_loader.ttc_parser import TTCFont
-from misc import WINDOWS_FONTS_FOLDER, get_app_data_folder
+from misc import WINDOWS_FONTS_FOLDER, get_app_data_folder, enumerate_files_in_directory
 
-SUPPORTED_FONTS_EXTENSIONS = {'.ttf', '.otf', '.ttc'}
 
-is_supported_font = lambda x: os.path.splitext(x)[1].lower() in SUPPORTED_FONTS_EXTENSIONS
+is_supported_font = lambda x: os.path.splitext(x)[1].lower() in {'.ttf', '.otf', '.ttc'}
 
 class FontLoader(object):
     def __init__(self, font_dirs = None, load_system_fonts = True):
@@ -56,7 +55,8 @@ class FontLoader(object):
         return found, not_found
 
     def __enumerate_font_files(self, directory):
-        return [os.path.join(directory, x) for x in filter(is_supported_font, os.listdir(directory))]
+        files =  enumerate_files_in_directory(directory)
+        return [x['path'] for x in files if is_supported_font(x['path'])]
 
     def __enumerate_system_fonts(self):
         system_fonts_paths =  self.__enumerate_font_files(WINDOWS_FONTS_FOLDER)
@@ -90,7 +90,7 @@ class FontLoader(object):
         if added or removed:
             # updating the cache
             with open(cache_file, 'w', encoding='utf-8') as file:
-                file.write(FontInfo.FontInfoJsonEncoder(indent=4).encode(self.fonts))
+                file.write(FontInfo.FontInfoJsonEncoder().encode(self.fonts))
 
     def discard_cache(self):
         cache = FontLoader.get_font_cache_file_path()
