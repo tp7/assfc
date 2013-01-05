@@ -1,50 +1,36 @@
 import os
-import sys
 from fnmatch import fnmatch
 from json import JSONDecoder
 import logging
+import sys
 from font_loader.font_info import FontInfo, FontStyle
 from font_loader.ttf_parser import TTFFont
 from font_loader.ttc_parser import TTCFont
-
-APPNAME = "assfc"
-WINDOWS_FONTS_FOLDER = os.environ['SYSTEMROOT'] + '\\Fonts'
+from misc import WINDOWS_FONTS_FOLDER, get_app_data_folder
 
 SUPPORTED_FONTS_EXTENSIONS = {'.ttf', '.otf', '.ttc'}
 
 is_supported_font = lambda x: os.path.splitext(x)[1].lower() in SUPPORTED_FONTS_EXTENSIONS
 
-def get_app_data_folder():
-    if sys.platform == 'darwin':
-        raise NotImplementedError("OSX support not implemented yet")
-    elif sys.platform == 'win32':
-        appdata = os.path.join(os.environ['APPDATA'], APPNAME)
-    else:
-        appdata = os.path.expanduser(os.path.join("~", "." + APPNAME))
-    if not os.path.exists(appdata):
-        os.mkdir(appdata)
-    return appdata
-
-def get_font_cache_file_path():
-    return os.path.join(get_app_data_folder(), "font_cache.json")
-
 class FontLoader(object):
     def __init__(self, font_dirs = None, load_system_fonts = True):
-        self.__fonts = []
-        #loading windows fonts
+        font_files = set()
+
         if load_system_fonts:
-            self.__fonts.extend(self.__load_system_fonts())
-        #loading fonts from all specified folders
+            font_files.update(self.__enumerate_system_fonts())
+
         if font_dirs:
             for dir in font_dirs:
-                self.__fonts.extend(self.load_fonts_in_directory(dir))
+                font_files.update(self.__enumerate_font_files(dir))
+
+        self.__load_fonts(font_files)
 
     def get_fonts_for_list(self, font_names):
         found = []
         not_found = []
         for font_name in font_names:
             found_font = None
-            for font in self.__fonts:
+            for font in self.fonts:
                 for name in (font.names + font.full_names):
                     if name.lower() == font_name.lower():
                         found_font = font
@@ -69,65 +55,49 @@ class FontLoader(object):
 
         return found, not_found
 
-    def load_fonts_in_directory(self, path):
-        files = map(lambda x: os.path.join(path, x), filter(is_supported_font, os.listdir(path)))
-        fonts = []
-        for font_path in files:
-            font = self.load_font(font_path)
-            if isinstance(font,TTCFont):
-                fonts.extend(font.get_infos())
-            else:
-                fonts.append(font.get_info())
-        return fonts
+    def __enumerate_font_files(self, directory):
+        return [os.path.join(directory, x) for x in filter(is_supported_font, os.listdir(directory))]
 
-    def load_font(self, path):
-        if fnmatch(path, '*.ttc'):
-            return TTCFont(path)
-        else:
-            return TTFFont(path)
+    def __enumerate_system_fonts(self):
+        system_fonts_paths =  self.__enumerate_font_files(WINDOWS_FONTS_FOLDER)
+        #todo: additional fonts from registry
+        return system_fonts_paths
 
-    def __load_system_fonts(self):
-        cache_file = get_font_cache_file_path()
-        system_fonts_paths =  frozenset(map(lambda x: os.path.join(WINDOWS_FONTS_FOLDER, x), filter(is_supported_font, os.listdir(WINDOWS_FONTS_FOLDER))))
-
-        loaded = []
+    def __load_fonts(self, fonts_paths):
+        cache_file = FontLoader.get_font_cache_file_path()
         removed = []
+        self.fonts = []
         try:
             #let's try to load our cache
             with open(cache_file, 'r', encoding='utf-8') as file:
                 cached_fonts = JSONDecoder(object_hook=FontInfo.deserialize).decode(file.read())
-
-            #updating the cache - finding all removed/added files
+                #updating the cache - finding all removed/added files
             cached_paths = frozenset(map(lambda x: x.path, cached_fonts))
-            removed = cached_paths.difference(system_fonts_paths)
-            added = system_fonts_paths.difference(cached_paths)
-            #loading all fonts except removed from cache
-            loaded = list(filter(lambda x: x.path not in removed, cached_fonts))
+            removed = cached_paths.difference(fonts_paths)
+            added = fonts_paths.difference(cached_paths)
+            self.fonts = list(filter(lambda x: x.path not in removed, cached_fonts))
         except:
+            print(sys.exc_info())
             #we don't care what happened - just reindex everything
-            added = system_fonts_paths
+            added = fonts_paths
 
         for font_path in added:
-            #indexing additional fonts
-            font = self.load_font(font_path)
-            if isinstance(font,TTCFont):
-                loaded.extend(font.get_infos())
+            if fnmatch(font_path, '*.ttc'):
+                self.fonts.extend(TTCFont(font_path).get_infos())
             else:
-                loaded.append(font.get_info())
+                self.fonts.append(TTFFont(font_path).get_info())
 
         if added or removed:
             # updating the cache
             with open(cache_file, 'w', encoding='utf-8') as file:
-                file.write(FontInfo.FontInfoJsonEncoder(indent=4).encode(loaded))
-
-        return loaded
+                file.write(FontInfo.FontInfoJsonEncoder(indent=4).encode(self.fonts))
 
     def discard_cache(self):
-        cache = get_font_cache_file_path()
+        cache = FontLoader.get_font_cache_file_path()
         if os.path.exists(cache):
             os.remove(cache)
 
+    @staticmethod
+    def get_font_cache_file_path():
+        return os.path.join(get_app_data_folder(), "font_cache.json")
 
-    @property
-    def fonts(self):
-        return self.__fonts

@@ -12,23 +12,23 @@ class FontLoaderTests(unittest.TestCase):
         logging.disable(logging.NOTSET)
 
     def test_returns_all_not_found_fonts(self):
-        loader = FontLoader(None, False)
+        loader = FontLoader(None, True)
         found, not_found = loader.get_fonts_for_list(['Jorvik Informal V2', 'Random font'])
         self.assertEqual(2, len(not_found))
 
     def test_returns_all_found_fonts(self):
-        loader = FontLoader([get_file_in_test_directory('')], False)
+        loader = FontLoader([get_file_in_test_directory('')], True)
         found, not_found = loader.get_fonts_for_list(['Jorvik Informal V2', 'Random font'])
         self.assertEqual(1, len(found))
         self.assertIn('Jorvik Informal V2', found[0].names)
 
     def test_performs_case_insensitive_search(self):
-        loader = FontLoader([get_file_in_test_directory('')], False)
+        loader = FontLoader([get_file_in_test_directory('')], True)
         found, not_found = loader.get_fonts_for_list(['JoRvIk INFormAl v2'])
         self.assertEqual(1, len(found))
 
     def test_does_not_add_same_font_twice(self):
-        loader = FontLoader([get_file_in_test_directory(''), get_file_in_test_directory('')], False)
+        loader = FontLoader([get_file_in_test_directory(''), get_file_in_test_directory('')], True)
         found, not_found = loader.get_fonts_for_list(['Jorvik', 'Jorvik informal'])
         self.assertEqual(1, len(found))
 
@@ -37,14 +37,14 @@ class FontLoaderTests(unittest.TestCase):
         self.assertTrue(len(loader.fonts) > 0)
 
     def test_finds_all_required_fonts(self):
-        loader = FontLoader(None, False)
+        loader = FontLoader(None, True)
         loader.fonts.append(FontInfo(['Arial'], ['Arial'], FontStyle.Regular, 'random', '1'))
         loader.fonts.append(FontInfo(['Arial Black'], ['Arial Black'], FontStyle.Regular, 'random', '2'))
         found, not_found = loader.get_fonts_for_list(['Arial', 'Arial Black'])
         self.assertEqual(2, len(found))
 
     def test_returns_only_appropriate_font(self):
-        loader = FontLoader(None, False)
+        loader = FontLoader(None, True)
         loader.fonts.append(FontInfo(['Arial'], ['Arial'], FontStyle.Regular, 'random', '1'))
         loader.fonts.append(FontInfo(['Arial Black'], ['Arial Black'], FontStyle.Regular, 'random', '2'))
         found, not_found = loader.get_fonts_for_list(['Arial'])

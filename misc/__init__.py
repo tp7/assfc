@@ -1,4 +1,7 @@
 import hashlib
+import os
+import sys
+
 
 class cached_property(object):
     def __init__(self, func, name=None, doc=None):
@@ -66,3 +69,18 @@ def flag_enum(name, *names):
     for n in names:
         attrs[n] = EnumElement([n])
     return type(name, (EnumBase,), attrs)
+
+
+APPNAME = "assfc"
+WINDOWS_FONTS_FOLDER = os.environ['SYSTEMROOT'] + '\\Fonts'
+
+def get_app_data_folder():
+    if sys.platform == 'darwin':
+        raise NotImplementedError("OSX support not implemented yet")
+    elif sys.platform == 'win32':
+        appdata = os.path.join(os.environ['APPDATA'], APPNAME)
+    else:
+        appdata = os.path.expanduser(os.path.join("~", "." + APPNAME))
+    if not os.path.exists(appdata):
+        os.mkdir(appdata)
+    return appdata
