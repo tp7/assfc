@@ -46,7 +46,7 @@ def process(args):
     parser = AssParser(os.path.abspath(args.script))
     collector = FontLoader(config.font_dirs)
 
-    found, not_found = collector.get_fonts_for_list(parser.get_fonts())
+    found, not_found = collector.get_fonts_for_list(parser.fonts)
 
     logging.info('Total found: %i', len(found))
     logging.info('Total not found: %i', len(not_found))
