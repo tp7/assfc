@@ -1,9 +1,8 @@
 import os
 import sys
 from fnmatch import fnmatch
-from json import JSONDecoder, JSONEncoder
+from json import JSONDecoder
 import logging
-from time import time
 from font_loader.font_info import FontInfo, FontStyle
 from font_loader.ttf_parser import TTFFont
 from font_loader.ttc_parser import TTCFont
@@ -11,7 +10,9 @@ from font_loader.ttc_parser import TTCFont
 APPNAME = "assfc"
 WINDOWS_FONTS_FOLDER = os.environ['SYSTEMROOT'] + '\\Fonts'
 
-is_supported_font = lambda x: fnmatch(x, '*.ttf') or fnmatch(x, '*.otf') or fnmatch(x, '*.ttc')
+SUPPORTED_FONTS_EXTENSIONS = {'.ttf', '.otf', '.ttc'}
+
+is_supported_font = lambda x: os.path.splitext(x)[1] in SUPPORTED_FONTS_EXTENSIONS
 
 def get_app_data_folder():
     if sys.platform == 'darwin':
@@ -69,7 +70,6 @@ class FontLoader(object):
         return found, not_found
 
     def load_fonts_in_directory(self, path):
-
         files = map(lambda x: os.path.join(path, x), filter(is_supported_font, os.listdir(path)))
         fonts = []
         for font_path in files:

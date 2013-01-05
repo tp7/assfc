@@ -36,10 +36,19 @@ class FontLoaderTests(unittest.TestCase):
         loader = FontLoader(None, True)
         self.assertTrue(len(loader.fonts) > 0)
 
-    def test_finds_3_different_arials_correctly_as_distinct_fonts(self):
-        loader = FontLoader(None, True)
-        found, not_found = loader.get_fonts_for_list(['Arial', 'Arial Black', 'Arial Unicode MS'])
-        self.assertEqual(3, len(found))
+    def test_finds_all_required_fonts(self):
+        loader = FontLoader(None, False)
+        loader.fonts.append(FontInfo(['Arial'], ['Arial'], FontStyle.Regular, 'random', '1'))
+        loader.fonts.append(FontInfo(['Arial Black'], ['Arial Black'], FontStyle.Regular, 'random', '2'))
+        found, not_found = loader.get_fonts_for_list(['Arial', 'Arial Black'])
+        self.assertEqual(2, len(found))
+
+    def test_returns_only_appropriate_font(self):
+        loader = FontLoader(None, False)
+        loader.fonts.append(FontInfo(['Arial'], ['Arial'], FontStyle.Regular, 'random', '1'))
+        loader.fonts.append(FontInfo(['Arial Black'], ['Arial Black'], FontStyle.Regular, 'random', '2'))
+        found, not_found = loader.get_fonts_for_list(['Arial'])
+        self.assertEqual(1, len(found))
 
 
 class TTFFontTests(unittest.TestCase):

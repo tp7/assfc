@@ -1,5 +1,5 @@
 import hashlib
-from json import JSONEncoder, dumps
+from json import JSONEncoder
 import logging
 
 def calculate_md5_for_file(path, block_size=2**20):
