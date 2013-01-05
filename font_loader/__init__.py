@@ -12,7 +12,7 @@ WINDOWS_FONTS_FOLDER = os.environ['SYSTEMROOT'] + '\\Fonts'
 
 SUPPORTED_FONTS_EXTENSIONS = {'.ttf', '.otf', '.ttc'}
 
-is_supported_font = lambda x: os.path.splitext(x)[1] in SUPPORTED_FONTS_EXTENSIONS
+is_supported_font = lambda x: os.path.splitext(x)[1].lower() in SUPPORTED_FONTS_EXTENSIONS
 
 def get_app_data_folder():
     if sys.platform == 'darwin':
