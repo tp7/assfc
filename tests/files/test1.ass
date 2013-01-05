@@ -36,10 +36,13 @@ Style: ShakingScreens,Adobe Caslon Pro,80,&H00FFFFFF,&H000000FF,&H10875D5E,&H000
 Style: ShakingScreensNumbers,Adobe Caslon Pro,60,&H00FFFFFF,&H000000FF,&H10875D5E,&H00000000,0,0,0,0,100,100,1,0,1,0,0,2,15,15,15,1
 Style: ShakingScreensBold,Adobe Caslon Pro Bold,80,&H00FFFFFF,&H000000FF,&H10875D5E,&H00000000,0,0,0,0,100,100,6,0,1,0,0,2,15,15,15,1
 Style: Unused Style,With nonexistent font,80,&H00FFFFFF,&H000000FF,&H10875D5E,&H00000000,0,0,0,0,100,100,6,0,1,0,0,2,15,15,15,1
+Style: Style with one comment and one dialogue line,YANEF,80,&H00FFFFFF,&H000000FF,&H10875D5E,&H00000000,0,0,0,0,100,100,6,0,1,0,0,2,15,15,15,1
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 Comment: 10,0:00:17.62,0:00:18.70,Default,,0,0,0,,{\fn this is totally not real font}Aryaryagi-san!
+Comment: 10,0:00:17.62,0:00:18.70,Style with one comment and one dialogue line,,0,0,0,,Aryaryagi-san!
+Dialogue: 10,0:00:17.62,0:00:18.70,Style with one comment and one dialogue line,,0,0,0,,Aryaryagi-san!
 Dialogue: 10,0:00:17.62,0:00:18.70,Default,,0,0,0,,Aryaryagi-san!
 Dialogue: 10,0:00:19.66,0:00:20.75,Default,,0,0,0,,It's "Araragi".
 Dialogue: 10,0:00:20.75,0:00:22.58,Default,,0,0,0,,Sorry, I stuttered.

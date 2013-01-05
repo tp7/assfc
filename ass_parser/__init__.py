@@ -38,22 +38,44 @@ class AssParser(object):
                 style = {x: y.strip() for x, y in zip(AssParser.StyleFormat, style)}
                 self.styles.append(style)
 
-    def font_used_in(self, font_name):
-        styles = [x for x in self.styles if font_name == x['Fontname']]
-        events = [x for x in self.events if font_name in x['LocalFonts']]
-        return styles, events
+
+    def get_lines_font_used_in(self, font_name, exclude_unused_styles=False, exclude_comments=False):
+        styles, events = self.__get_styles_and_events_font_used_in(font_name, exclude_unused_styles, exclude_comments)
+        lines = set(self.events.index(x) for x in events)
+        for s in styles:
+            lines.update(self.get_lines_style_used_in(s['Name'],exclude_comments))
+        return list(lines)
+
+    def get_lines_style_used_in(self, style_name, exclude_comments=False):
+        events = self.__only_dialogue_events if exclude_comments else self.events
+        #this is dumb and inefficient
+        events = (x for x in events if style_name == x['Style'])
+        return list(self.events.index(x) for x in events)
 
     def get_fonts(self, exclude_unused_styles=False, exclude_comments=False):
-        styles = (x for x in self.styles if x['Name'] in self.__used_styles_names) if exclude_unused_styles else self.styles
-        events = (x for x in self.events if x['Descriptor'] == 'Dialogue') if exclude_comments else self.events
+        events, styles = self.__filter_events_and_styles(exclude_unused_styles, exclude_comments)
         return self.__get_fonts_used_in(styles, events)
 
     def __get_fonts_used_in(self, styles, events):
         fonts = set(x['Fontname'] for x in styles)
-        for event in events:
-            fonts.update(event['LocalFonts'])
+        fonts.update(item for event in events for item in event['LocalFonts'])
         return list(fonts)
 
+    def __get_styles_and_events_font_used_in(self, font_name, exclude_unused_styles=False, exclude_comments=False):
+        events, styles = self.__filter_events_and_styles(exclude_unused_styles, exclude_comments)
+        styles = [x for x in styles if font_name == x['Fontname']]
+        events = [x for x in events if font_name in x['LocalFonts']]
+        return styles, events
+
+    def __filter_events_and_styles(self, exclude_unused_styles=False, exclude_comments=False ):
+        styles = self.__used_styles if exclude_unused_styles else self.styles
+        events = self.__only_dialogue_events if exclude_comments else self.events
+        return events, styles
+
     @cached_property
-    def __used_styles_names(self):
-        return set((x['Style'] for x in self.events))
+    def __used_styles(self):
+        return [x for x in self.styles if x['Name'] in set((x['Style'] for x in self.events))]
+
+    @cached_property
+    def __only_dialogue_events(self):
+        return [x for x in self.events if x['Descriptor'] == 'Dialogue']
