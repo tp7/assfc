@@ -1,8 +1,8 @@
 import os
 from fnmatch import fnmatch
-from json import JSONDecoder
 import logging
 import sys
+import pickle
 from font_loader.font_info import FontInfo, FontStyle
 from font_loader.ttf_parser import TTFFont
 from font_loader.ttc_parser import TTCFont
@@ -69,8 +69,8 @@ class FontLoader(object):
         self.fonts = []
         try:
             #let's try to load our cache
-            with open(cache_file, 'r', encoding='utf-8') as file:
-                cached_fonts = JSONDecoder(object_hook=FontInfo.deserialize).decode(file.read())
+            with open(cache_file, 'rb') as file:
+                cached_fonts = pickle.load(file)
                 #updating the cache - finding all removed/added files
             cached_paths = frozenset(map(lambda x: x.path, cached_fonts))
             removed = cached_paths.difference(fonts_paths)
@@ -89,8 +89,8 @@ class FontLoader(object):
 
         if added or removed:
             # updating the cache
-            with open(cache_file, 'w', encoding='utf-8') as file:
-                file.write(FontInfo.FontInfoJsonEncoder().encode(self.fonts))
+            with open(cache_file, 'wb') as file:
+                pickle.dump(self.fonts, file, -1)
 
     def discard_cache(self):
         cache = FontLoader.get_font_cache_file_path()
@@ -99,5 +99,5 @@ class FontLoader(object):
 
     @staticmethod
     def get_font_cache_file_path():
-        return os.path.join(get_app_data_folder(), "font_cache.json")
+        return os.path.join(get_app_data_folder(), "font_cache.bin")
 
