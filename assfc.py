@@ -6,6 +6,8 @@ from ass_parser import AssParser
 from font_loader import FontLoader
 import os
 from json import JSONDecoder
+from subprocess import call
+from shutil import copy2 as copyfile
 
 default_config = { "font_dirs":[],
             "include_system_fonts":True,
@@ -49,7 +51,25 @@ def set_logging(log_file, verbose):
 def create_mmg_command(mmg_path, output_path, script_path, fonts):
     font_list = ('--attachment-mime-type application/x-truetype-font --attachment-name "{0}" --attach-file "{1}"'.format(os.path.basename(font.path), font.path) for font in fonts)
     attachment_string = ' '.join(font_list)
-    return '{0} -o "{1}" "{2}" {4}'.format(os.path.abspath(mmg_path), os.path.abspath(output_path), os.path.abspath(script_path), attachment_string)
+    return '{0} -o "{1}" "{2}" {3}'.format(os.path.abspath(mmg_path), os.path.abspath(output_path), os.path.abspath(script_path), attachment_string)
+
+def create_mks_file(mmg_path, output_path, script_path, fonts):
+    command = create_mmg_command(mmg_path, output_path, script_path, fonts)
+    logging.debug('mks creation command: %s' % command)
+    call(command)
+
+def copy_fonts_to_folder(folder, fonts):
+    folder = os.path.abspath(folder)
+    logging.info('Copying fonts to %s' % folder)
+    if not os.path.exists(folder):
+        os.mkdir(folder)
+    if not os.path.isdir(folder):
+        logging.error('File with the same name already exists at %s' % folder)
+        exit(1)
+    for font in fonts:
+        filename = os.path.basename(font.path)
+        dest = os.path.join(folder, filename)
+        copyfile(font.path, dest)
 
 def process(args):
     config = get_config(args)
@@ -59,7 +79,7 @@ def process(args):
 
     logging.info('-----Started new task at %s-----' % str(ctime()))
 
-    parser = AssParser(os.path.abspath(args.script))
+    parser = AssParser(os.path.abspath(config['script']))
     if config['rebuild_cache']:
         FontLoader.discard_cache()
 
@@ -69,6 +89,12 @@ def process(args):
 
     logging.info('Total found: %i', len(found))
     logging.info('Total not found: %i', len(not_found))
+
+    if config['output_location'] is not None:
+        if config['output_location'].endswith('.mks'):
+            create_mks_file(config['mmg'], config['output_location'], config['script'], found)
+        else:
+            copy_fonts_to_folder(config['output_location'], found)
 
 
 if __name__ == '__main__':
