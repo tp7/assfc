@@ -7,27 +7,41 @@ from font_loader import FontLoader
 import os
 from json import JSONDecoder
 
-class Config(object):
-    def __init__(self, dict):
-        self.__dict__.update(dict)
-
-    def __repr__(self):
-        return str(self.__dict__)
+default_config = { "font_dirs":[],
+            "include_system_fonts":True,
+            "verbose":False,
+            "exclude_unused_styles":False,
+            "exclude_comments":False,
+            "log_file":None}
 
 def get_script_directory():
     return os.path.dirname(__file__)
 
 def parse_config():
-    global config
+    default = dict(default_config)
     with open(get_script_directory() + "/config.json") as file:
-        config = JSONDecoder(object_pairs_hook=Config).decode(file.read())
+        read = JSONDecoder().decode(file.read())
+        default.update(read)
+        return default
 
-def set_logging(log_file):
+def get_config(args):
+    from_file = parse_config()
+    config = dict(from_file)
+    config.update(args.__dict__)
+    for key, value in config.items():
+        if key not in {'output_location', 'additional_font_dirs'} and value is None:
+            config[key] = from_file[key]
+    if config['additional_font_dirs']:
+        config['font_dirs'].extend(config['additional_font_dirs'])
+    return config
+
+def set_logging(log_file, verbose):
+    level = logging.DEBUG if verbose else logging.INFO
     format = "LOG:%(levelname)s: %(message)s"
-    logging.basicConfig(level = logging.DEBUG, format=format)
+    logging.basicConfig(level = level, format=format)
 
     if log_file:
-        log_file = config.log_file if os.path.isabs(config.log_file) else "%s/%s" %(get_script_directory(), config.log_file)
+        log_file = log_file if os.path.isabs(log_file) else "%s/%s" %(get_script_directory(), log_file)
         console = logging.FileHandler(log_file)
         console.setFormatter(logging.Formatter(format))
         logging.getLogger('').addHandler(console)
@@ -37,16 +51,21 @@ def create_mmg_command(mmg_path, output_path, script_path, fonts):
     attachment_string = ' '.join(font_list)
     return '{0} -o "{1}" "{2}" {4}'.format(os.path.abspath(mmg_path), os.path.abspath(output_path), os.path.abspath(script_path), attachment_string)
 
-
 def process(args):
-    parse_config()
-    set_logging(config.log_file)
+    config = get_config(args)
+    set_logging(config['log_file'], config['verbose'])
+
+    logging.debug(str(config))
+
     logging.info('-----Started new task at %s-----' % str(ctime()))
 
     parser = AssParser(os.path.abspath(args.script))
-    collector = FontLoader(config.font_dirs)
+    if config['rebuild_cache']:
+        FontLoader.discard_cache()
 
-    found, not_found = collector.get_fonts_for_list(parser.fonts)
+    collector = FontLoader(config['font_dirs'], config['include_system_fonts'])
+
+    found, not_found = collector.get_fonts_for_list(parser.get_fonts(config['exclude_unused_styles'], config['exclude_comments']))
 
     logging.info('Total found: %i', len(found))
     logging.info('Total not found: %i', len(not_found))
@@ -54,9 +73,29 @@ def process(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="ASS font collector")
-    parser.add_argument('-o', default=None, dest='output_folder', metavar='folder', help='output folder', required=True)
+
+    parser.add_argument('--include', action='append', metavar='directory', dest='additional_font_dirs', help='Additional font directory to include')
+
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument('--with-system', action='store_true', dest='include_system_fonts', help='Include system fonts')
+    group.add_argument('--without-system', action='store_false', dest='include_system_fonts', help='Exclude system fonts')
+
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument('--exclude-comments', action='store_true', dest='exclude_comments', help='Include system fonts')
+    group.add_argument('--include-comments', action='store_false', dest='exclude_comments', help='Include system fonts')
+
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument('--exclude-unused-styles', action='store_true', dest='exclude_unused_styles', help='Include system fonts')
+    group.add_argument('--include-unused-styles', action='store_false', dest='exclude_unused_styles', help='Include system fonts')
+
     parser.add_argument('-v','--verbose', action='store_true', dest='verbose', help='show current frame')
+    parser.add_argument('--log', dest='log_file', metavar='file', help='Output log to file')
+    parser.add_argument('--rebuild-cache', action='store_true', dest='rebuild_cache', help='Rebuild font cache')
+
+    parser.add_argument('-o', default=None, dest='output_location', metavar='folder/file', help='output folder or mks file')
     parser.add_argument('script', default=None, help='input script')
+    parser.set_defaults(include_system_fonts = None, exclude_comments=None, exclude_unused_styles = None,
+                        verbose = None, log_file = None, rebuild_cache=False, output_location=None)
     args = parser.parse_args(sys.argv[1:])
     process(args)
 

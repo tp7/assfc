@@ -1,6 +1,10 @@
 {
     "font_dirs":[
     ],
+    "include_system_fonts":true,
+    "verbose":true,
+    "exclude_unused_styles":true,
+    "exclude_comments":true,
     "log_file":null,
     "mmg":"C:\\Program Files (x86)\\MKVtoolnix\\mmg.exe"
 }

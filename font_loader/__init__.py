@@ -92,7 +92,8 @@ class FontLoader(object):
             with open(cache_file, 'wb') as file:
                 pickle.dump(self.fonts, file, -1)
 
-    def discard_cache(self):
+    @staticmethod
+    def discard_cache():
         cache = FontLoader.get_font_cache_file_path()
         if os.path.exists(cache):
             os.remove(cache)
