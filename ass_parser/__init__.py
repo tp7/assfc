@@ -1,4 +1,5 @@
 from re import compile
+import sys
 from misc import cached_property
 
 
@@ -21,21 +22,21 @@ class AssParser(object):
             script = file.read()
         for line in script.splitlines():
             try:
-                descriptor, value = line.split(':', maxsplit=1)
+                descriptor, value = line.split(':', 1)
             except:
                 continue
             if descriptor not in {'Dialogue', 'Comment', 'Style'}:
                 continue
 
             if descriptor in {'Dialogue', 'Comment'}:
-                event = value.split(',', maxsplit=len(AssParser.EventFormat) - 1)
+                event = value.split(',', len(AssParser.EventFormat) - 1)
                 event = {x: y.strip() for x, y in zip(AssParser.EventFormat, event)}
                 event['Descriptor'] = descriptor
                 event['LocalFonts'] = self.local_fonts_regex.findall(event['Text'])
                 event['LineNumber'] = len(self.events)
                 self.events.append(event)
             else:
-                style = value.split(',', maxsplit=len(AssParser.StyleFormat) - 1)
+                style = value.split(',', len(AssParser.StyleFormat) - 1)
                 style = {x: y.strip() for x, y in zip(AssParser.StyleFormat, style)}
                 self.styles.append(style)
 

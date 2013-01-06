@@ -1,7 +1,9 @@
 import hashlib
+import logging
 import os
 import sys
-from ctypes import windll, wintypes, byref
+from re import compile
+
 from time import time
 
 class cached_property(object):
@@ -32,13 +34,22 @@ def calculate_md5_for_file(path, block_size=2**20):
 
 def enumerate_files_in_directory(directory):
     files = []
-    windows_enumerate_directory(directory, files)
+    if sys.platform == 'win32':
+        windows_enumerate_directory(directory, files)
+    else:
+        linux_enumerate_directory(directory, files)
     return files
 
+def linux_enumerate_directory(directory, files_collection):
+    for path, subdirs, files in os.walk(directory):
+        for name in files:
+            files_collection.append({'path':os.path.join(path, name)})
+
 def windows_enumerate_directory(directory, files):
+    from ctypes import windll, wintypes, byref
     FILE_ATTRIBUTE_DIRECTORY = 0x10
     INVALID_HANDLE_VALUE = -1
-    BAN = (u'.', u'..')
+    BAN = ('.', '..')
 
     FindFirstFile = windll.kernel32.FindFirstFileW
     FindNextFile  = windll.kernel32.FindNextFileW
@@ -110,9 +121,16 @@ def flag_enum(name, *names):
     return type(name, (EnumBase,), attrs)
 #
 #flag enum implementation end
+def read_linux_font_dirs():
+    linux_font_dir = compile(r"<dir>(.+?)</dir>")
+    with open('/etc/fonts/fonts.conf') as file:
+        return linux_font_dir.findall(file.read())
 
 APPNAME = "assfc"
-WINDOWS_FONTS_FOLDER = os.environ['SYSTEMROOT'] + '\\Fonts'
+if sys.platform == 'win32':
+    SYSTEM_FONTS_FOLDERS = [os.path.join(os.environ['SYSTEMROOT'], 'Fonts')]
+else:
+    SYSTEM_FONTS_FOLDERS = read_linux_font_dirs()
 
 def get_app_data_folder():
     if sys.platform == 'darwin':

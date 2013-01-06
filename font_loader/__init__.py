@@ -6,7 +6,7 @@ import pickle
 from font_loader.font_info import FontInfo, FontStyle
 from font_loader.ttf_parser import TTFFont
 from font_loader.ttc_parser import TTCFont
-from misc import WINDOWS_FONTS_FOLDER, get_app_data_folder, enumerate_files_in_directory
+from misc import SYSTEM_FONTS_FOLDERS, get_app_data_folder, enumerate_files_in_directory
 
 
 is_supported_font = lambda x: os.path.splitext(x)[1].lower() in {'.ttf', '.otf', '.ttc'}
@@ -54,12 +54,16 @@ class FontLoader(object):
 
         return found, not_found
 
-    def __enumerate_font_files(self, directory):
+    @staticmethod
+    def __enumerate_font_files( directory):
         files =  enumerate_files_in_directory(directory)
         return [x['path'] for x in files if is_supported_font(x['path'])]
 
-    def __enumerate_system_fonts(self):
-        system_fonts_paths =  self.__enumerate_font_files(WINDOWS_FONTS_FOLDER)
+    @staticmethod
+    def __enumerate_system_fonts():
+        system_fonts_paths = []
+        for f in SYSTEM_FONTS_FOLDERS:
+            system_fonts_paths.extend(FontLoader.__enumerate_font_files(f))
         #todo: additional fonts from registry
         return system_fonts_paths
 

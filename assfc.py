@@ -21,7 +21,7 @@ def get_script_directory():
 
 def parse_config():
     default = dict(default_config)
-    with open(get_script_directory() + "/config.json") as file:
+    with open(os.path.join(get_script_directory(), "config.json")) as file:
         read = JSONDecoder().decode(file.read())
         default.update(read)
         return default
