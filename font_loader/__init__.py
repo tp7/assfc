@@ -30,7 +30,7 @@ class FontLoader(object):
         for font_name in font_names:
             found_font = None
             for font in self.fonts:
-                for name in (font.names + font.full_names):
+                for name in font.names:
                     if name.lower() == font_name.lower():
                         found_font = font
                         break

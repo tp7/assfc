@@ -38,15 +38,15 @@ class FontLoaderTests(unittest.TestCase):
 
     def test_finds_all_required_fonts(self):
         loader = FontLoader(None, True)
-        loader.fonts.append(FontInfo(['Arial'], ['Arial'], FontStyle.Regular, 'random', '1'))
-        loader.fonts.append(FontInfo(['Arial Black'], ['Arial Black'], FontStyle.Regular, 'random', '2'))
+        loader.fonts.append(FontInfo(['Arial'], FontStyle.Regular, 'random', '1'))
+        loader.fonts.append(FontInfo(['Arial Black'], FontStyle.Regular, 'random', '2'))
         found, not_found = loader.get_fonts_for_list(['Arial', 'Arial Black'])
         self.assertEqual(2, len(found))
 
     def test_returns_only_appropriate_font(self):
         loader = FontLoader(None, True)
-        loader.fonts.append(FontInfo(['Arial'], ['Arial'], FontStyle.Regular, 'random', '1'))
-        loader.fonts.append(FontInfo(['Arial Black'], ['Arial Black'], FontStyle.Regular, 'random', '2'))
+        loader.fonts.append(FontInfo(['Arial'], FontStyle.Regular, 'random', '1'))
+        loader.fonts.append(FontInfo(['Arial Black'], FontStyle.Regular, 'random', '2'))
         found, not_found = loader.get_fonts_for_list(['Arial'])
         self.assertEqual(1, len(found))
 
@@ -85,15 +85,15 @@ class TTCFontTests(unittest.TestCase):
 
 class FontInfoTests(unittest.TestCase):
     def test_calculates_md5_on_access(self):
-        info = FontInfo([], [], None, get_file_in_test_directory('Jorvik.ttf'), None)
+        info = FontInfo([], None, get_file_in_test_directory('Jorvik.ttf'), None)
         self.assertIsNotNone(info.md5)
 
     def test_calculates_correct_md5(self):
-        info = FontInfo([], [], None, get_file_in_test_directory('Jorvik.ttf'), None)
+        info = FontInfo([], None, get_file_in_test_directory('Jorvik.ttf'), None)
         self.assertEqual(info.md5, '0dae05c47e919281d7ac1e0170e4d3a8')
 
     def test_caches_md5_in_private_field(self):
-        info = FontInfo([], [], None, get_file_in_test_directory('Jorvik.ttf'), None)
+        info = FontInfo([], None, get_file_in_test_directory('Jorvik.ttf'), None)
         self.assertIsNone(info._FontInfo__md5)
         md5 = info.md5
         self.assertIsNotNone(info._FontInfo__md5)
