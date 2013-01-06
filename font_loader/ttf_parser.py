@@ -43,7 +43,7 @@ class TTFFont(object):
 
     def __init__(self, path, offset=0):
         self.headers = {}
-        self.__styles = frozenset()
+        self.__style = FontStyle.Regular
         self.__names = set()
         self.__path = path
         self.parse(self.__path, offset)
@@ -52,7 +52,7 @@ class TTFFont(object):
         with open(path,'rb') as file:
             file.seek(offset)
             data =  struct.unpack('>IHHHH', file.read(12))
-            offset_table = OffsetTable(data[0], data[1], data[2], data[3], data[4])
+            offset_table = OffsetTable._make(data)
 
             for i in range(offset_table.num_tables):
                 data = struct.unpack('>4sLLL', file.read(16))
@@ -63,12 +63,12 @@ class TTFFont(object):
 
                 file.seek(table_directory.offset)
                 data =  struct.unpack('>HHH', file.read(6))
-                naming_table = NamingTable(data[0], data[1], data[2])
+                naming_table = NamingTable._make(data)
 
                 names = []
                 for record in range(naming_table.number_of_name_records):
                     data = struct.unpack('>HHHHHH', file.read(12))
-                    names.append(NameRecord(data[0], data[1], data[2], data[3], data[4], data[5]))
+                    names.append(NameRecord._make(data))
 
                 for name in names:
                     file.seek(table_directory.offset + naming_table.offset_start_of_string_storage + name.offset_from_storage_area)
@@ -101,12 +101,12 @@ class TTFFont(object):
     def __parse_styles(self, sub_family_name):
         name = sub_family_name.lower()
         if name.find('bold') is not -1:
-            self.__styles |= FontStyle.Bold
+            self.__style = FontStyle.get_style(self.__style, FontStyle.Bold)
         if name.find('italic') is not -1:
-            self.__styles |= FontStyle.Italic
+            self.__style = FontStyle.get_style(self.__style, FontStyle.Italic)
         if name.find('regular') is not -1 or name.find('normal') is not -1 or name.find('standard') is not -1:
-            self.__styles |= FontStyle.Regular
+            self.__style = FontStyle.get_style(self.__style, FontStyle.Regular)
 
     def get_info(self):
-        return FontInfo(list(self.__names), self.__styles, self.__path, None)
+        return FontInfo(list(self.__names), self.__style, self.__path, None)
 

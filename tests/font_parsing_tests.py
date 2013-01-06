@@ -66,15 +66,15 @@ class TTFFontTests(unittest.TestCase):
 
     def test_detects_italic_only_font(self):
         font = TTFFont(get_file_in_test_directory('CaviarDreams_Italic.ttf'))
-        self.assertTrue(font.get_info().styles.has_flag(FontStyle.Italic))
+        self.assertIs(font.get_info().style, FontStyle.Italic)
 
     def test_detects_bold_only_font(self):
         font = TTFFont(get_file_in_test_directory('Caviar Dreams Bold.ttf'))
-        self.assertTrue(font.get_info().styles.has_flag(FontStyle.Bold))
+        self.assertIs(font.get_info().style, FontStyle.Bold)
 
     def test_detects_italic_bold_font(self):
         font = TTFFont(get_file_in_test_directory('CaviarDreams_BoldItalic.ttf'))
-        self.assertTrue(font.get_info().styles.has_flag(FontStyle.Italic | FontStyle.Bold))
+        self.assertIs(font.get_info().style, FontStyle.BoldItalic)
 
 class TTCFontTests(unittest.TestCase):
     def test_contains_all_names(self):

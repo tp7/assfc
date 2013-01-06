@@ -1,14 +1,33 @@
 import logging
-from misc import calculate_md5_for_file, flag_enum
+from misc import calculate_md5_for_file
 
-FontStyle = flag_enum('FontStyle', 'Regular','Bold','Italic')
+class FontStyle:
+    Regular = 1
+    Bold = 2
+    Italic = 3
+    BoldItalic = 4
+
+    names = ['Undefined', 'Regular', 'Bold', 'Italic', 'Bold Italic']
+
+    @staticmethod
+    def get_style(original, new):
+        if original is FontStyle.Bold and new is FontStyle.Italic \
+        or original is FontStyle.Italic and new is FontStyle.Bold:
+            return FontStyle.BoldItalic
+        else:
+            return new
+
+    @staticmethod
+    def to_string(style):
+        return FontStyle.names[style]
+
 
 class FontInfo(object):
-    __slots__ = ['names', 'styles', 'path', '__md5']
+    __slots__ = ['names', 'style', 'path', '__md5']
 
-    def __init__(self, names, styles, path, md5):
+    def __init__(self, names, style, path, md5):
         self.names = names
-        self.styles = styles
+        self.style = style
         self.path = path
         self.__md5 = md5
 
