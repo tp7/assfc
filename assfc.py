@@ -80,13 +80,14 @@ def process(args):
     start_time = time()
     logging.info('-----Started new task at %s-----' % str(ctime()))
 
-    parser = AssParser(os.path.abspath(config['script']))
+    fonts =  AssParser.get_fonts_statistics(os.path.abspath(config['script']), config['exclude_unused_styles'], config['exclude_comments'])
+    fonts = [f.fontname for f in fonts.keys()]
     if config['rebuild_cache']:
         FontLoader.discard_cache()
 
     collector = FontLoader(config['font_dirs'], config['include_system_fonts'])
 
-    found, not_found = collector.get_fonts_for_list(parser.get_fonts(config['exclude_unused_styles'], config['exclude_comments']))
+    found, not_found = collector.get_fonts_for_list(fonts)
 
     logging.info('Total found: %i', len(found))
     logging.info('Total not found: %i', len(not_found))

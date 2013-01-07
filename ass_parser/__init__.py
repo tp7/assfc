@@ -65,35 +65,30 @@ class AssParser(object):
 
     class AssBlockOverride(object):
         __slots__ = ['tags']
-        #this is going to be slow
-        #another option: r'\\(i(?=[\d\\])|i(?=$)|b(?=[\d\\])|b(?=$)|fn)((?<=fn)[^\\]*|\d*)'
-        tag_regex = [compile(r'\\(i)([0,1])'), compile(r'\\(b)(\d*)\\'), compile(r'\\(r)(.*?)\\'), compile(r'\\(fn)(.*?)\\')]
+        tag_regex = compile(r'\\(i(?=[\d\\])|i(?=$)|b(?=[\d\\])|b(?=$)|fn)((?<=fn)[^\\]*|\d*)')
 
         def __init__(self, text):
-            self.tags = []
-            for regex in self.tag_regex:
-                self.tags.extend((AssParser.AssTag(f[0], f[1]) for f in regex.findall(text)))
+            self.tags = [AssParser.AssTag(f[0], f[1]) for f in self.tag_regex.findall(text)]
 
         def __repr__(self):
             return 'OverrideBlock(text=%s)' %  ''.join(('\\%s%s' %(tag.name, tag.value) for tag in self.tags))
 
-    StyleFormat = ('Name', 'Fontname', 'Fontsize', 'PrimaryColour', 'SecondaryColour', 'OutlineColour',
-                   'BackColour', 'Bold', 'Italic', 'Underline', 'StrikeOut', 'ScaleX', 'ScaleY', 'Spacing', 'Angle',
-                   'BorderStyle', 'Outline', 'Shadow', 'Alignment', 'MarginL', 'MarginR', 'MarginV', 'Encoding')
+#    Style format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut,
+#                   ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
 
-    EventFormat = ('Layer', 'Start', 'End', 'Style', 'Name', 'MarginL', 'MarginR', 'MarginV', 'Effect', 'Text')
-
-    local_fonts_regex = compile(r"\\fn([^\\}]+)")
-
-    def __init__(self, script_path):
-        self.styles = []
-        self.events = []
-        self.__load_script(script_path)
+#    Event format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 
     @staticmethod
-    def get_fonts_statistics(path, exclude_unused_styles, exclude_comments):
+    def get_fonts_statistics(path, exclude_unused_styles = False, exclude_comments = False):
         styles, events = AssParser.read_script(path)
         used_styles = defaultdict(UsageData)
+
+        if exclude_unused_styles:
+            used = set(event.style for event in events)
+            for style in list(styles.keys()):
+                if style not in used:
+                    del styles[style]
+
 
         for name, info in styles.items():
             used_styles[info].styles.add(name)
@@ -102,9 +97,9 @@ class AssParser(object):
             if exclude_comments and event.is_comment:
                 continue
             AssParser.process_event(event, used_styles, styles)
-
-        for key, value in used_styles.items():
-            print('%s: %s' %(str(key).ljust(55), value ))
+#        for key, value in used_styles.items():
+#            print('%s: %s' %(str(key).ljust(55), value ))
+        return used_styles
 
     @staticmethod
     def process_event(event, used_styles, styles):
@@ -161,7 +156,6 @@ class AssParser(object):
         return blocks
 
 
-
     @staticmethod
     def process_override_block(blocks, text, pos, end, drawing):
         pos += 1
@@ -199,7 +193,6 @@ class AssParser(object):
     def read_script(path):
         with open(path, encoding='utf-8') as file:
             script = file.read()
-
         styles = {}
         events = []
         for line in script.splitlines():
@@ -218,60 +211,3 @@ class AssParser(object):
                 style_info = StyleInfo.from_ass(ass_style[1], ass_style[7], ass_style[8])# AssParser.AssStyle(style[0].strip(), style[1], style[7], style[8])
                 styles[ass_style[0].strip()] = style_info
         return styles, events
-
-
-
-    def __load_script(self, path):
-        with open(path, encoding='utf-8') as file:
-            script = file.read()
-        for line in script.splitlines():
-            try:
-                descriptor, value = line.split(':', 1)
-            except:
-                continue
-            if descriptor not in {'Dialogue', 'Comment', 'Style'}:
-                continue
-
-            if descriptor in {'Dialogue', 'Comment'}:
-                event = value.split(',', 9)
-                event = {x: y.strip() for x, y in zip(AssParser.EventFormat, event)}
-                event['Descriptor'] = descriptor
-                event['LocalFonts'] = self.local_fonts_regex.findall(event['Text'])
-                event['LineNumber'] = len(self.events)
-                self.events.append(event)
-            else:
-                style = value.split(',', 22)
-                style = {x: y.strip() for x, y in zip(AssParser.StyleFormat, style)}
-                self.styles.append(style)
-
-    def get_lines_font_used_in(self, font_name, exclude_unused_styles=False, exclude_comments=False):
-        events, styles = self.__filter_events_and_styles(exclude_unused_styles, exclude_comments)
-        styles = (style for style in styles if font_name == style['Fontname'])
-
-        lines = set(event['LineNumber'] for event in events if font_name in event['LocalFonts'])
-        for s in styles:
-            lines.update(self.get_lines_style_used_in(s['Name'],exclude_comments))
-        return list(lines)
-
-    def get_lines_style_used_in(self, style_name, exclude_comments=False):
-        events = self.__only_dialogue_events if exclude_comments else self.events
-        return [event['LineNumber'] for event in events if style_name == event['Style']]
-
-    def get_fonts(self, exclude_unused_styles=False, exclude_comments=False):
-        events, styles = self.__filter_events_and_styles(exclude_unused_styles, exclude_comments)
-        fonts = set(style['Fontname'] for style in styles)
-        fonts.update(font for event in events for font in event['LocalFonts'])
-        return list(fonts)
-
-    def __filter_events_and_styles(self, exclude_unused_styles=False, exclude_comments=False ):
-        styles = self.__used_styles if exclude_unused_styles else self.styles
-        events = self.__only_dialogue_events if exclude_comments else self.events
-        return events, styles
-
-    @cached_property
-    def __used_styles(self):
-        return [style for style in self.styles if style['Name'] in set((event['Style'] for event in self.events))]
-
-    @cached_property
-    def __only_dialogue_events(self):
-        return [event for event in self.events if event['Descriptor'] == 'Dialogue']

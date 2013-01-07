@@ -38,7 +38,7 @@ Style: Style with one comment and one dialogue line,YANEF,80,&H00FFFFFF,&H000000
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
-Comment: 10,0:00:17.62,0:00:18.70,Default,,0,0,0,,{\fn this is totally not real font}Aryaryagi-san!
+Comment: 10,0:00:17.62,0:00:18.70,Default,,0,0,0,,{\fnthis is totally not real font}Aryaryagi-san!
 Comment: 10,0:00:17.62,0:00:18.70,Style with one comment and one dialogue line,,0,0,0,,Aryaryagi-san!
 Dialogue: 10,0:00:17.62,0:00:18.70,Style with one comment and one dialogue line,,0,0,0,,Aryaryagi-san!
 Dialogue: 10,0:00:17.62,0:00:18.70,Default,,0,0,0,,Aryaryagi-san!
