@@ -4,7 +4,6 @@ import os
 import sys
 from re import compile
 
-from time import time
 
 class cached_property(object):
     def __init__(self, func, name=None, doc=None):
@@ -83,11 +82,12 @@ def read_linux_font_dirs():
     with open('/etc/fonts/fonts.conf') as file:
         return linux_font_dir.findall(file.read())
 
-APPNAME = "assfc"
 if sys.platform == 'win32':
     SYSTEM_FONTS_FOLDERS = [os.path.join(os.environ['SYSTEMROOT'], 'Fonts')]
 else:
     SYSTEM_FONTS_FOLDERS = read_linux_font_dirs()
+
+APPNAME = "assfc"
 
 def get_app_data_folder():
     if sys.platform == 'darwin':

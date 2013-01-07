@@ -1,4 +1,3 @@
-import logging
 from misc import calculate_md5_for_file
 
 class FontStyle:

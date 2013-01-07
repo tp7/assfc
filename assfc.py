@@ -1,6 +1,6 @@
 import argparse
 import logging
-from time import ctime
+from time import ctime, time
 import sys
 from ass_parser import AssParser
 from font_loader import FontLoader
@@ -19,23 +19,23 @@ default_config = { "font_dirs":[],
 def get_script_directory():
     return os.path.dirname(__file__)
 
-def parse_config():
-    default = dict(default_config)
-    with open(os.path.join(get_script_directory(), "config.json")) as file:
-        read = JSONDecoder().decode(file.read())
-        default.update(read)
-        return default
-
-def get_config(args):
-    from_file = parse_config()
-    config = dict(from_file)
+def merge_configs(args, file, default):
+    config = dict(default)
+    config.update(file)
     config.update(args.__dict__)
+
     for key, value in config.items():
         if key not in {'output_location', 'additional_font_dirs'} and value is None:
-            config[key] = from_file[key]
+            config[key] = file[key] if key in file and file[key] is not None else default[key]
     if config['additional_font_dirs']:
         config['font_dirs'].extend(config['additional_font_dirs'])
     return config
+
+def get_config(args):
+    with open(os.path.join(get_script_directory(), "config.json")) as file:
+        file_text = file.read()
+    from_file = JSONDecoder().decode(file_text)
+    return merge_configs(args, from_file, default_config)
 
 def set_logging(log_file, verbose):
     level = logging.DEBUG if verbose else logging.INFO
@@ -77,6 +77,7 @@ def process(args):
 
     logging.debug(str(config))
 
+    start_time = time()
     logging.info('-----Started new task at %s-----' % str(ctime()))
 
     parser = AssParser(os.path.abspath(config['script']))
@@ -95,6 +96,8 @@ def process(args):
             create_mks_file(config['mmg'], config['output_location'], config['script'], found)
         else:
             copy_fonts_to_folder(config['output_location'], found)
+
+    logging.debug('Job done in %fms' % round(time() - start_time, 5))
 
 
 if __name__ == '__main__':

@@ -55,7 +55,7 @@ class FontLoader(object):
         return found, not_found
 
     @staticmethod
-    def __enumerate_font_files( directory):
+    def __enumerate_font_files(directory):
         files =  enumerate_files_in_directory(directory)
         return [x['path'] for x in files if is_supported_font(x['path'])]
 
