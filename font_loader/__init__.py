@@ -26,7 +26,7 @@ class FontLoader(object):
 
     def get_fonts_for_list(self, font_list):
         found = []
-        not_found = []
+        not_found = {}
         for font_info in font_list.keys():
             logging.debug('Processing font %s...' % font_info)
             candidates = []
@@ -40,7 +40,7 @@ class FontLoader(object):
             logging.debug('Found %i candidates' % len(candidates))
 
             if not candidates:
-                not_found.append(font_info)
+                not_found[font_info] = font_list[font_info]
                 continue
 
             for candidate in candidates:
@@ -58,7 +58,7 @@ class FontLoader(object):
                         break
 
             if not best_candidate:
-                not_found.append(font_info)
+                not_found[font_info] = font_list[font_info]
                 continue
 
             if best_candidate in found:

@@ -81,12 +81,25 @@ def process(args):
     logging.info('-----Started new task at %s-----' % str(ctime()))
 
     fonts =  AssParser.get_fonts_statistics(os.path.abspath(config['script']), config['exclude_unused_styles'], config['exclude_comments'])
+
     if config['rebuild_cache']:
         FontLoader.discard_cache()
 
     collector = FontLoader(config['font_dirs'], config['include_system_fonts'])
 
     found, not_found = collector.get_fonts_for_list(fonts)
+
+    for font, usage in not_found.items():
+        text = "Could not find font '%s'" % str(font)
+        if usage.styles:
+            text += '\nUsed in styles %s' % str(usage.styles)
+        if usage.lines:
+            if len(usage.lines) > 50:
+                text += '\nUsed on more than 50 lines'
+            else:
+                text += '\nUsed on lines %s' % str(usage.lines)
+        text += '\n\n'
+        logging.warning(text)
 
     logging.info('Total found: %i', len(found))
     logging.info('Total not found: %i', len(not_found))

@@ -14,7 +14,7 @@ class StyleInfo(object):
         return '%s (Bold: %s, Italic: %s)' % (self.fontname, str(self.bold), str(self.italic))
 
     def __hash__(self):
-        return hash(str(self))
+        return hash('%s%i%i' % (self.fontname.lower(), int(self.bold), int(self.italic)))
 
     def __eq__(self, other):
         return hash(self) == hash(other)
@@ -100,23 +100,22 @@ class AssParser(object):
     def process_event(event, used_styles, styles):
         blocks = AssParser.parse_tags(event.text)
         style = styles[event.style].clone()
-        initial = style
+        initial = style.clone()
         overriden = False
         for block in blocks:
             if isinstance(block, AssParser.AssBlockOverride):
                 for tag in block.tags:
-#                    print(tag.name)
                     if tag.name == 'r':
                         style = styles[tag.get_value(event.style)].clone()
                         overriden = False
                     elif tag.name == 'b':
-                        style.bold = bool(tag.get_value(initial.bold))
+                        style = StyleInfo(style.fontname, bool(tag.get_value(initial.bold)), style.italic)
                         overriden = True
                     elif tag.name == 'i':
-                        style.italic = bool(tag.get_value(initial.italic))
+                        style = StyleInfo(style.fontname, style.bold, bool(tag.get_value(initial.italic)))
                         overriden = True
                     elif tag.name == 'fn':
-                        style.fontname = tag.get_value(initial.fontname)
+                        style = StyleInfo(tag.get_value(initial.fontname), style.bold, style.italic)
                         overriden = True
             elif isinstance(block, AssParser.AssBlockPlain):
                 if not block.text:
