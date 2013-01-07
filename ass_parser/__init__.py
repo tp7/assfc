@@ -40,11 +40,8 @@ class UsageData(object):
         lines.sort()
         return 'Styles: %s, lines: %s' % (self.styles, lines)
 
-
 class AssParser(object):
     AssEvent = namedtuple('AssEvent', ['line_number', 'style', 'text', 'is_comment'] )
-
-    AssBlockUseless = namedtuple('Useless', ['text'])
     AssBlockPlain = namedtuple('AssBlockPlain', ['text'])
 
     class AssTag(object):
@@ -60,13 +57,22 @@ class AssParser(object):
 
     class AssBlockOverride(object):
         __slots__ = ['tags']
-        tag_regex = compile(r'\\(i(?=[\d\\])|i(?=$)|b(?=[\d\\])|b(?=$)|fn)((?<=fn)[^\\]*|\d*)')
+
+        tag_regex = compile(r'\\(i(?=[\d\\]|$)|b(?=[\d\\]|$)|fn|r|p(?=\d))((?<![ibp])[^\\]*|\d*)')
 
         def __init__(self, text):
             self.tags = [AssParser.AssTag(f[0], f[1]) for f in self.tag_regex.findall(text)]
 
         def __repr__(self):
             return 'OverrideBlock(text=%s)' %  ''.join(('\\%s%s' %(tag.name, tag.value) for tag in self.tags))
+
+        def get_tag(self, name):
+            tags = list(self.tags)
+            tags.reverse()
+            for tag in tags:
+                if tag.name == name:
+                    return tag
+            return None
 
 #    Style format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut,
 #                   ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
@@ -96,6 +102,7 @@ class AssParser(object):
 #            print('%s: %s' %(str(key).ljust(55), value ))
         return used_styles
 
+
     @staticmethod
     def process_event(event, used_styles, styles):
         blocks = AssParser.parse_tags(event.text)
@@ -123,14 +130,12 @@ class AssParser(object):
                 if overriden:
                     used_styles[style].lines.add(event.line_number)
                 used_styles[style].has_chars = True
-            #do nothing with AssBlockUseless
-
 
 
     @staticmethod
     def parse_tags(text):
         if not text:
-            return AssParser.AssBlockUseless(''), #this is a tuple. Yeah, I love Python cuz it's so obvious. Wait, you didn't notice that comma?
+            return []
 
         blocks = []
         drawing = False
@@ -155,15 +160,15 @@ class AssParser(object):
         pos += 1
         work = text[pos:end]
         if work and work.find('\\') == -1:
-            #comment line
-            blocks.append(AssParser.AssBlockUseless(work))
+            #comment line - do nothing
+            pass
         else:
             block = AssParser.AssBlockOverride(work)
             blocks.append(block)
             for tag in block.tags:
                 if tag.name == 'p':
                     if tag.value == '0':
-                        drawing = True
+                        drawing = False
                     else:
                         drawing = True
         return end+1, drawing
@@ -178,7 +183,7 @@ class AssParser(object):
             work = text[pos:end]
             pos = end
         if drawing:
-            blocks.append(AssParser.AssBlockUseless(work))
+            pass
         else:
             blocks.append(AssParser.AssBlockPlain(work))
         return pos
