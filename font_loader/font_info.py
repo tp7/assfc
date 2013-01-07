@@ -20,6 +20,17 @@ class FontStyle:
     def to_string(style):
         return FontStyle.names[style]
 
+    @staticmethod
+    def create(bold, italic):
+        if bold and italic:
+            return FontStyle.BoldItalic
+        if bold:
+            return FontStyle.Bold
+        if italic:
+            return FontStyle.Italic
+        return FontStyle.Regular
+
+
 
 class FontInfo(object):
     __slots__ = ['names', 'style', 'path', '__md5']
