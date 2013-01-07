@@ -1,6 +1,8 @@
 from collections import namedtuple, defaultdict
 import logging
 from re import compile
+import sys
+
 
 class StyleInfo(object):
     __slots__ = ['fontname', 'bold', 'italic']
@@ -28,12 +30,12 @@ class StyleInfo(object):
 
 class UsageData(object):
     #styles refer to ASS styles defined globally
-    __slots__ = ['lines', 'styles', 'has_chars']
+    __slots__ = ['lines', 'styles', 'chars']
 
     def __init__(self):
         self.lines = set()
         self.styles = set()
-        self.has_chars = False
+        self.chars = set()
 
     def __repr__(self):
         lines = list(self.lines)
@@ -98,8 +100,6 @@ class AssParser(object):
             if exclude_comments and event.is_comment:
                 continue
             AssParser.process_event(event, used_styles, styles)
-#        for key, value in used_styles.items():
-#            print('%s: %s' %(str(key).ljust(55), value ))
         return used_styles
 
 
@@ -125,11 +125,25 @@ class AssParser(object):
                         style = StyleInfo(tag.get_value(initial.fontname), style.bold, style.italic)
                         overriden = True
             elif isinstance(block, AssParser.AssBlockPlain):
+                used_style = used_styles[style]
                 if not block.text:
                     continue
                 if overriden:
-                    used_styles[style].lines.add(event.line_number)
-                used_styles[style].has_chars = True
+                    used_style.lines.add(event.line_number)
+                idx = 0
+                while idx < len(block.text):
+                    cur = block.text[idx]
+                    if cur == '\\' and idx != (len(block.text) - 1):
+                        idx += 1
+                        next = block.text[idx]
+                        if next == 'N' or next == 'n':
+                            continue
+                        if next == 'h':
+                            cur = 0xA0 #I don't even
+                        else:
+                            idx -= 1
+                    used_style.chars.add(cur)
+                    idx += 1
 
 
     @staticmethod
@@ -197,7 +211,7 @@ class AssParser(object):
         for line in script.splitlines():
             try:
                 descriptor, value = line.split(':', 1)
-            except:
+            except ValueError:
                 continue
             if descriptor not in {'Dialogue', 'Comment', 'Style'}:
                 continue
@@ -207,6 +221,6 @@ class AssParser(object):
                 events.append(ass_event)
             else:
                 ass_style = value.split(',', 22) #len(AssParser.EventFormat) - 1
-                style_info = StyleInfo.from_ass(ass_style[1], ass_style[7], ass_style[8])# AssParser.AssStyle(style[0].strip(), style[1], style[7], style[8])
+                style_info = StyleInfo.from_ass(ass_style[1], ass_style[7], ass_style[8])#
                 styles[ass_style[0].strip()] = style_info
         return styles, events

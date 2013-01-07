@@ -1,4 +1,4 @@
-from collections import namedtuple
+from collections import namedtuple, defaultdict
 import logging
 import struct
 from font_loader.font_info import FontInfo
@@ -42,7 +42,7 @@ class TTFFont(object):
         WWSSubfamilyName = 22
 
     def __init__(self, path, offset=0):
-        self.headers = {}
+        self.headers = defaultdict(list)
         self.__bold = False
         self.__italic = False
         self.__names = set()
@@ -84,7 +84,7 @@ class TTFFont(object):
                         #this is probably 'a bit' broken
                         value = struct.unpack('>' + str(size)+'s', file.read(size))[0].decode('ISO 8859-1')
                     else:
-                        logging.debug("Error while parsing font file %s. Name data: %s" % (path, str(name)))
+                        logging.warning("Error while parsing font file %s. Name data: %s" % (path, str(name)))
                         value = ''
                     self.__set_name_by_id(name.name_id, value)
                 return
@@ -95,8 +95,6 @@ class TTFFont(object):
         elif id is self.TTFNameId.FontSubFamilyName:
             self.__parse_styles(value)
 
-        if id not in self.headers:
-            self.headers[id] = []
         self.headers[id].append(value)
 
     def __parse_styles(self, sub_family_name):
@@ -105,8 +103,6 @@ class TTFFont(object):
             self.__bold = True
         if name.find('italic') is not -1:
             self.__italic = True
-        if name.find('regular') is not -1 or name.find('normal') is not -1 or name.find('standard') is not -1:
-            pass
 
     def get_info(self):
         return FontInfo(list(self.__names), self.__bold, self.__italic, self.__path, None)
