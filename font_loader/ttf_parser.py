@@ -1,7 +1,7 @@
 from collections import namedtuple
 import logging
 import struct
-from font_loader.font_info import FontInfo, FontStyle
+from font_loader.font_info import FontInfo
 
 OffsetTable = namedtuple('OffsetTable', ['version', 'num_tables', 'search_range', 'entry_selector', 'range_shift'])
 TableDirectory = namedtuple('TableDirectory', ['tag', 'check_sum', 'offset', 'length'])
@@ -43,7 +43,8 @@ class TTFFont(object):
 
     def __init__(self, path, offset=0):
         self.headers = {}
-        self.__style = FontStyle.Regular
+        self.__bold = False
+        self.__italic = False
         self.__names = set()
         self.__path = path
         self.parse(self.__path, offset)
@@ -101,12 +102,12 @@ class TTFFont(object):
     def __parse_styles(self, sub_family_name):
         name = sub_family_name.lower()
         if name.find('bold') is not -1:
-            self.__style = FontStyle.get_style(self.__style, FontStyle.Bold)
+            self.__bold = True
         if name.find('italic') is not -1:
-            self.__style = FontStyle.get_style(self.__style, FontStyle.Italic)
+            self.__italic = True
         if name.find('regular') is not -1 or name.find('normal') is not -1 or name.find('standard') is not -1:
-            self.__style = FontStyle.get_style(self.__style, FontStyle.Regular)
+            pass
 
     def get_info(self):
-        return FontInfo(list(self.__names), self.__style, self.__path, None)
+        return FontInfo(list(self.__names), self.__bold, self.__italic, self.__path, None)
 

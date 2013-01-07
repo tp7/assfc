@@ -81,7 +81,6 @@ def process(args):
     logging.info('-----Started new task at %s-----' % str(ctime()))
 
     fonts =  AssParser.get_fonts_statistics(os.path.abspath(config['script']), config['exclude_unused_styles'], config['exclude_comments'])
-    fonts = [f.fontname for f in fonts.keys()]
     if config['rebuild_cache']:
         FontLoader.discard_cache()
 

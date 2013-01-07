@@ -3,7 +3,7 @@ from fnmatch import fnmatch
 import logging
 import sys
 import pickle
-from font_loader.font_info import FontInfo, FontStyle
+from font_loader.font_info import FontInfo
 from font_loader.ttf_parser import TTFFont
 from font_loader.ttc_parser import TTCFont
 from misc import SYSTEM_FONTS_FOLDERS, get_app_data_folder, enumerate_files_in_directory
@@ -24,34 +24,54 @@ class FontLoader(object):
 
         self.__load_fonts(font_files)
 
-    def get_fonts_for_list(self, font_names):
+    def get_fonts_for_list(self, font_list):
         found = []
         not_found = []
-        for font_name in font_names:
-            found_font = None
+        for font_info in font_list.keys():
+            logging.debug('Processing font %s...' % font_info)
+            candidates = []
+            best_candidate = None
             for font in self.fonts:
                 for name in font.names:
-                    if name.lower() == font_name.lower():
-                        found_font = font
+                    if name.lower() == font_info.fontname.lower():
+                        candidates.append(font)
                         break
 
-            if not found_font:
-                not_found.append(font_name)
-                logging.warning("Font not found: %s" % font_name)
+            logging.debug('Found %i candidates' % len(candidates))
+
+            if not candidates:
+                not_found.append(font_info)
                 continue
 
-            if found_font in found:
-                logging.debug("Font %s already exists" % found_font.names[0])
+            for candidate in candidates:
+                if candidate.bold == font_info.bold and candidate.italic == font_info.italic:
+                    best_candidate = candidate
+                    logging.debug("Found exact match")
+                    break
+
+            if not best_candidate:
+                logging.debug('Failed to find exact match. Looking for regular version...')
+                for candidate in candidates:
+                    if candidate.bold == False and candidate.italic == False:
+                        best_candidate = candidate
+                        logging.debug('Found regular one')
+                        break
+
+            if not best_candidate:
+                not_found.append(font_info)
+                continue
+
+            if best_candidate in found:
+                logging.debug("Font %s already exists" % best_candidate.names[0])
                 continue
 
             for already_added in found:
-                if already_added.md5 == found_font.md5:
+                if already_added.md5 == best_candidate.md5:
                     logging.info("Duplicate font found. Skipping.")
                     continue
 
-            found.append(found_font)
-            logging.debug('Font found: %s. File: %s' % (font_name, found_font.path))
-
+            found.append(best_candidate)
+            logging.debug('Found font %s at %s' % (font_info, best_candidate.path))
         return found, not_found
 
     @staticmethod

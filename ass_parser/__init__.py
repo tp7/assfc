@@ -1,11 +1,6 @@
 from collections import namedtuple, defaultdict
 import logging
 from re import compile
-import re
-import sys
-from time import time
-from font_loader import FontStyle
-from misc import cached_property
 
 class StyleInfo(object):
     __slots__ = ['fontname', 'bold', 'italic']
