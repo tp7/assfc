@@ -7,6 +7,7 @@ from font_loader import FontLoader
 import os
 from json import JSONDecoder
 from subprocess import call
+import cProfile
 from shutil import copy2 as copyfile
 
 default_config = { "font_dirs":[],
@@ -106,9 +107,9 @@ def process(args):
 
     if config['output_location'] is not None:
         if config['output_location'].endswith('.mks'):
-            create_mks_file(config['mmg'], config['output_location'], config['script'], found)
+            create_mks_file(config['mmg'], config['output_location'], config['script'], found.values())
         else:
-            copy_fonts_to_folder(config['output_location'], found)
+            copy_fonts_to_folder(config['output_location'], found.values())
 
     logging.debug('Job done in %fms' % round(time() - start_time, 5))
 
@@ -140,4 +141,5 @@ if __name__ == '__main__':
                         verbose = None, log_file = None, rebuild_cache=False, output_location=None)
     args = parser.parse_args(sys.argv[1:])
     process(args)
+#    cProfile.run('process(args)', sort='time', filename='profile.txt')
 

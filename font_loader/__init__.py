@@ -1,3 +1,4 @@
+from collections import defaultdict
 import os
 from fnmatch import fnmatch
 import logging
@@ -25,17 +26,18 @@ class FontLoader(object):
         self.__load_fonts(font_files)
 
     def get_fonts_for_list(self, font_list):
-        found = []
+        found = {}
         not_found = {}
+
+        search_dict = defaultdict(list)
+        for font in self.fonts:
+            for name in font.names:
+                search_dict[name.lower()].append(font)
+
         for font_info in font_list.keys():
             logging.debug('Processing font %s...' % font_info)
-            candidates = []
+            candidates = search_dict[font_info.fontname.lower()]
             best_candidate = None
-            for font in self.fonts:
-                for name in font.names:
-                    if name.lower() == font_info.fontname.lower():
-                        candidates.append(font)
-                        break
 
             logging.debug('Found %i candidates' % len(candidates))
 
@@ -61,16 +63,16 @@ class FontLoader(object):
                 not_found[font_info] = font_list[font_info]
                 continue
 
-            if best_candidate in found:
+            if best_candidate in found.values():
                 logging.debug("Font %s already exists" % best_candidate.names[0])
                 continue
 
-            for already_added in found:
+            for already_added in found.values():
                 if already_added.md5 == best_candidate.md5:
                     logging.info("Duplicate font found. Skipping.")
                     continue
 
-            found.append(best_candidate)
+            found[font_info] = best_candidate
             logging.debug('Found font %s at %s' % (font_info, best_candidate.path))
         return found, not_found
 

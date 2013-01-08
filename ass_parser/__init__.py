@@ -16,7 +16,7 @@ class StyleInfo(object):
         return '%s (Bold: %s, Italic: %s)' % (self.fontname, str(self.bold), str(self.italic))
 
     def __hash__(self):
-        return hash('%s%i%i' % (self.fontname.lower(), int(self.bold), int(self.italic)))
+        return hash((self.fontname.lower(), self.bold, self.italic))
 
     def __eq__(self, other):
         return hash(self) == hash(other)
@@ -124,16 +124,19 @@ class AssParser(object):
                     elif tag.name == 'fn':
                         style = StyleInfo(tag.get_value(initial.fontname), style.bold, style.italic)
                         overriden = True
-            elif isinstance(block, AssParser.AssBlockPlain):
-                used_style = used_styles[style]
+            else: #AssParser.AssBlockPlain
                 if not block.text:
                     continue
+
+                used_style = used_styles[style]
                 if overriden:
                     used_style.lines.add(event.line_number)
+
                 idx = 0
-                while idx < len(block.text):
+                strlen = len(block.text)
+                while idx < strlen:
                     cur = block.text[idx]
-                    if cur == '\\' and idx != (len(block.text) - 1):
+                    if cur == '\\' and idx != (strlen - 1):
                         idx += 1
                         next = block.text[idx]
                         if next == 'N' or next == 'n':
@@ -154,8 +157,9 @@ class AssParser(object):
         blocks = []
         drawing = False
         cur = 0
+        strlen = len(text)
         #todo: this whole thing is way too C++
-        while cur < len(text):
+        while cur < strlen:
             if text[cur] == '{':
                 end = text.find('}', cur)
                 if end == -1:

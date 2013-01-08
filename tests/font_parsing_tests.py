@@ -23,7 +23,7 @@ class FontLoaderTests(unittest.TestCase):
         data = {StyleInfo('Jorvik Informal V2', False, False) : UsageData(), StyleInfo('Random font', False, False) : UsageData()}
         found, not_found = loader.get_fonts_for_list(data)
         self.assertEqual(1, len(found))
-        self.assertIn('Jorvik Informal V2', found[0].names)
+        self.assertIn('Jorvik Informal V2', list(found.values())[0].names)
 
     def test_performs_case_insensitive_search(self):
         loader = FontLoader([get_file_in_test_directory('')], True)
