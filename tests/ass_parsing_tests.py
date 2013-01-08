@@ -48,58 +48,60 @@ class StyleInfoTests(unittest.TestCase):
         self.assertFalse(item.bold)
 
 
-class AssTagTests(unittest.TestCase):
-    def test_returns_default_if_value_is_none(self):
-        tag = AssParser.AssTag('tag', None)
-        self.assertTrue(tag.get_value(True))
-
-    def test_returns_default_if_value_is_empty_string(self):
-        tag = AssParser.AssTag('tag', '')
-        self.assertTrue(tag.get_value(True))
-
-    def test_returns_value_if_it_exists(self):
-        tag = AssParser.AssTag('tag', False)
-        self.assertFalse(tag.get_value(True))
+#class AssTagTests(unittest.TestCase):
+#    def test_returns_default_if_value_is_none(self):
+#        tag = AssParser.AssTag('tag', None)
+#        self.assertTrue(tag.get_value(True))
+#
+#    def test_returns_default_if_value_is_empty_string(self):
+#        tag = AssParser.AssTag('tag', '')
+#        self.assertTrue(tag.get_value(True))
+#
+#    def test_returns_value_if_it_exists(self):
+#        tag = AssParser.AssTag('tag', False)
+#        self.assertFalse(tag.get_value(True))
 
 
 class AssBlockOverrideTests(unittest.TestCase):
     def test_does_not_include_blur(self):
         block = AssParser.AssBlockOverride(r'\blur12\fnFont\i1')
-        self.assertIsNone(block.get_tag('b'))
+        with self.assertRaises(KeyError):
+            tag = block.tags['b']
+#        self.assertIsNone(block.get_tag('b'))
 
     def test_returns_correct_value_for_italic_and_bold_when_specified_as_a_single_digit(self):
         block = AssParser.AssBlockOverride(r'\blur12\b0\fnFont\i1')
-        self.assertEqual(block.get_tag('i').value, '1')
-        self.assertEqual(block.get_tag('b').value, '0')
+        self.assertEqual(block.tags['i'], '1')
+        self.assertEqual(block.tags['b'], '0')
 
     def test_returns_empty_string_when_italic_or_bold_does_not_have_digits(self):
         block = AssParser.AssBlockOverride(r'\blur12\b\fnFont\i')
-        self.assertEqual(block.get_tag('i').value, '')
-        self.assertEqual(block.get_tag('b').value, '')
+        self.assertEqual(block.tags['i'], '')
+        self.assertEqual(block.tags['b'], '')
 
     def test_detects_drawing(self):
         block = AssParser.AssBlockOverride(r'\blur1\p1\fnFont')
-        self.assertEqual(block.get_tag('p').value, '1')
+        self.assertEqual(block.tags['p'], '1')
 
     def test_parses_empty_style_override(self):
         block = AssParser.AssBlockOverride(r'\blur1\r\fnFont')
-        self.assertEqual(block.get_tag('r').value, '')
+        self.assertEqual(block.tags['r'], '')
 
     def test_parses_style_override_with_style_name(self):
         block = AssParser.AssBlockOverride(r'\blur1\rRandom Style\fnFont')
-        self.assertEqual(block.get_tag('r').value, 'Random Style')
+        self.assertEqual(block.tags['r'], 'Random Style')
 
     def test_returns_correct_font_name_even_if_it_has_spaces(self):
         block = AssParser.AssBlockOverride(r'\blur12\b\fnFont with spaces\i')
-        self.assertEqual(block.get_tag('fn').value, 'Font with spaces')
+        self.assertEqual(block.tags['fn'], 'Font with spaces')
 
     def test_returns_last_tag_value(self):
         block = AssParser.AssBlockOverride(r'\blur12\b1\fnFont\b0\i')
-        self.assertEqual(block.get_tag('b').value, '0')
+        self.assertEqual(block.tags['b'], '0')
 
     def test_returns_weight_for_bold_if_tag_has_multiple_digits(self):
         block = AssParser.AssBlockOverride(r'\blur12\b123\fnFont')
-        self.assertEqual(block.get_tag('b').value, '123')
+        self.assertEqual(block.tags['b'], '123')
 
 
 class TagsParsingTests(unittest.TestCase):
@@ -107,9 +109,9 @@ class TagsParsingTests(unittest.TestCase):
         blocks = AssParser.parse_tags('')
         self.assertFalse(blocks)
 
-    def test_returns_correct_number_of_blocks(self):
+    def test_returns_correct_number_of_blocks_but_does_not_include_uselss_ones(self):
         blocks = AssParser.parse_tags(r"{\an5\blur1.1\fsp3\1a&H32\pos(962.2,918.8)}Animation number 392")
-        self.assertEqual(len(blocks), 2)
+        self.assertEqual(len(blocks), 1)
 
     def test_does_not_include_drawing(self):
         blocks = AssParser.parse_tags(r'{\b1\p1}blablabla{\p0}blablabla')
@@ -124,6 +126,16 @@ class TagsParsingTests(unittest.TestCase):
 
     def test_treats_not_closed_override_block_as_plain_text(self):
         blocks = AssParser.parse_tags(r'{\b1\b0blablabla')
+        self.assertIsInstance(blocks[0], AssParser.AssBlockPlain)
+
+    def does_not_include_comments(self):
+        blocks = AssParser.parse_tags(r'{comment line}text')
+        self.assertTrue(len(blocks),1)
+        self.assertIsInstance(blocks[0], AssParser.AssBlockPlain)
+
+    def does_not_include_completely_empty_override_blocks(self):
+        blocks = AssParser.parse_tags(r'{}text')
+        self.assertTrue(len(blocks),1)
         self.assertIsInstance(blocks[0], AssParser.AssBlockPlain)
 
 class EventProcessingTests(unittest.TestCase):

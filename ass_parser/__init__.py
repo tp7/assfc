@@ -45,35 +45,22 @@ class AssParser(object):
     AssEvent = namedtuple('AssEvent', ['line_number', 'style', 'text', 'is_comment'] )
     AssBlockPlain = namedtuple('AssBlockPlain', ['text'])
 
-    class AssTag(object):
-        __slots__ = ['name', 'value']
-        def __init__(self, name, value):
-            self.name = name
-            self.value = value
-
-        def get_value(self, default):
-            if self.value is None or self.value == '':
-                return default
-            return self.value
-
     class AssBlockOverride(object):
         __slots__ = ['tags']
 
         tag_regex = compile(r'\\(i(?=[\d\\]|$)|b(?=[\d\\]|$)|fn|r|p(?=\d))((?<![ibp])[^\\]*|\d*)')
 
         def __init__(self, text):
-            self.tags = [AssParser.AssTag(f[0], f[1]) for f in self.tag_regex.findall(text)]
+            self.tags = {f[0].lower():f[1] for f in self.tag_regex.findall(text)}
 
         def __repr__(self):
-            return 'OverrideBlock(text=%s)' %  ''.join(('\\%s%s' %(tag.name, tag.value) for tag in self.tags))
+            return 'OverrideBlock(text=%s)' %  ''.join(('\\%s%s' %(name, value) for name, value in self.tags.items()))
 
-        def get_tag(self, name):
-            tags = list(self.tags)
-            tags.reverse()
-            for tag in tags:
-                if tag.name == name:
-                    return tag
-            return None
+        def get_tag(self, name, default):
+            value = self.tags[name]
+            if value is None or value == '':
+                return default
+            return value
 
 #    Style format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut,
 #                   ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
@@ -111,19 +98,26 @@ class AssParser(object):
         for block in blocks:
             try:
                 #if isinstance(block, AssParser.AssBlockOverride):
-                for tag in block.tags:
-                    if tag.name == 'r':
-                        style = styles[tag.get_value(event.style)].clone()
-                        overriden = False
-                    elif tag.name == 'b':
-                        style = StyleInfo(style.fontname, bool(tag.get_value(initial.bold)), style.italic)
-                        overriden = True
-                    elif tag.name == 'i':
-                        style = StyleInfo(style.fontname, style.bold, bool(tag.get_value(initial.italic)))
-                        overriden = True
-                    elif tag.name == 'fn':
-                        style = StyleInfo(tag.get_value(initial.fontname), style.bold, style.italic)
-                        overriden = True
+                try:
+                    style = styles[block.get_tag('r', event.style)].clone()
+                    overriden = False
+                except KeyError:
+                    pass
+                try:
+                    style = StyleInfo(style.fontname, bool(block.get_tag('b', initial.bold)), style.italic)
+                    overriden = True
+                except KeyError:
+                    pass
+                try:
+                    style = StyleInfo(style.fontname, style.bold, bool(block.get_tag('i', initial.italic)))
+                    overriden = True
+                except KeyError:
+                    pass
+                try:
+                    style = StyleInfo(block.get_tag('fn', initial.fontname), style.bold, style.italic)
+                    overriden = True
+                except KeyError:
+                    pass
             except AttributeError: #AssParser.AssBlockPlain
                 if not block.text:
                     continue
@@ -162,20 +156,19 @@ class AssParser(object):
 
     @staticmethod
     def process_override_block(blocks, text, pos, end, drawing):
-        pos += 1
-        work = text[pos:end]
-        if work and work.find('\\') == -1:
+        work = text[pos+1:end]
+        if not '\\' in work:
             #comment line - do nothing
             pass
         else:
             block = AssParser.AssBlockOverride(work)
+            if not block.tags:
+                return end+1, drawing
             blocks.append(block)
-            for tag in block.tags:
-                if tag.name == 'p':
-                    if tag.value == '0':
-                        drawing = False
-                    else:
-                        drawing = True
+            try:
+                drawing = block.tags['p'] != '0'
+            except KeyError:
+                pass
         return end+1, drawing
 
     @staticmethod
