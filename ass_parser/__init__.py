@@ -2,7 +2,6 @@ from collections import namedtuple, defaultdict
 import logging
 from re import compile
 
-
 class StyleInfo(object):
     __slots__ = ['fontname', 'bold', 'italic']
 
@@ -98,26 +97,18 @@ class AssParser(object):
         for block in blocks:
             try:
                 #if isinstance(block, AssParser.AssBlockOverride):
-                try:
+                if 'r' in block.tags:
                     style = styles[block.get_tag('r', event.style)].clone()
                     overriden = False
-                except KeyError:
-                    pass
-                try:
+                if 'b' in block.tags:
                     style = StyleInfo(style.fontname, bool(block.get_tag('b', initial.bold)), style.italic)
                     overriden = True
-                except KeyError:
-                    pass
-                try:
+                if 'i' in block.tags:
                     style = StyleInfo(style.fontname, style.bold, bool(block.get_tag('i', initial.italic)))
                     overriden = True
-                except KeyError:
-                    pass
-                try:
+                if 'fn' in block.tags:
                     style = StyleInfo(block.get_tag('fn', initial.fontname), style.bold, style.italic)
                     overriden = True
-                except KeyError:
-                    pass
             except AttributeError: #AssParser.AssBlockPlain
                 if not block.text:
                     continue
@@ -192,6 +183,7 @@ class AssParser(object):
             script = file.read()
         styles = {}
         events = []
+        idx = 1
         for line in script.splitlines():
             try:
                 descriptor, value = line.split(':', 1)
@@ -201,7 +193,8 @@ class AssParser(object):
                 continue
             if descriptor in {'Dialogue', 'Comment'}:
                 event = value.split(',', 9) #len(EventFormat) - 1
-                ass_event = AssParser.AssEvent(len(events)+1, event[3], event[9].strip(), True if descriptor=='Comment' else False)
+                ass_event = AssParser.AssEvent(idx, event[3], event[9].strip(), True if descriptor=='Comment' else False)
+                idx += 1
                 events.append(ass_event)
             else:
                 ass_style = value.split(',', 22) #len(AssParser.EventFormat) - 1

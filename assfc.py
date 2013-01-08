@@ -111,7 +111,7 @@ def process(args):
         else:
             copy_fonts_to_folder(config['output_location'], found.values())
 
-    logging.debug('Job done in %fms' % round(time() - start_time, 5))
+    logging.debug('Job done in %fs' % round(time() - start_time, 5))
 
 
 if __name__ == '__main__':
