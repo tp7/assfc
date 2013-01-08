@@ -1,5 +1,6 @@
+from collections import defaultdict
 import unittest
-from ass_parser import AssParser, StyleInfo
+from ass_parser import AssParser, StyleInfo, UsageData
 from tests.common import get_file_in_test_directory
 
 class StyleInfoTests(unittest.TestCase):
@@ -124,6 +125,40 @@ class TagsParsingTests(unittest.TestCase):
     def test_treats_not_closed_override_block_as_plain_text(self):
         blocks = AssParser.parse_tags(r'{\b1\b0blablabla')
         self.assertIsInstance(blocks[0], AssParser.AssBlockPlain)
+
+class EventProcessingTests(unittest.TestCase):
+    def test_find_all_unique_plain_text_characters(self):
+        styles = {'style' : StyleInfo('Font', False, False)}
+        used_styles = defaultdict(UsageData)
+        event = AssParser.AssEvent(1, 'style','randommmm' ,False)
+        AssParser.process_event(event, used_styles, styles)
+        result = list(used_styles.values())[0]
+        self.assertSequenceEqual({'r','a', 'n', 'd','o','m'}, result.chars)
+
+    def test_also_includes_spaces(self):
+        styles = {'style' : StyleInfo('Font', False, False)}
+        used_styles = defaultdict(UsageData)
+        event = AssParser.AssEvent(1, 'style','ra ndo mm mm' ,False)
+        AssParser.process_event(event, used_styles, styles)
+        result = list(used_styles.values())[0]
+        self.assertSequenceEqual({'r','a', 'n', ' ', 'd','o','m'}, result.chars)
+
+    def test_does_not_include_new_lines(self):
+        styles = {'style' : StyleInfo('Font', False, False)}
+        used_styles = defaultdict(UsageData)
+        event = AssParser.AssEvent(1, 'style',r'rardo\nmm\Nmm' ,False)
+        AssParser.process_event(event, used_styles, styles)
+        result = list(used_styles.values())[0]
+        self.assertSequenceEqual({'r','a', 'd','o','m'}, result.chars)
+
+    def test_replaces_h_with_tab(self):
+        styles = {'style' : StyleInfo('Font', False, False)}
+        used_styles = defaultdict(UsageData)
+        event = AssParser.AssEvent(1, 'style',r'lolol\hlolol' ,False)
+        AssParser.process_event(event, used_styles, styles)
+        result = list(used_styles.values())[0]
+        self.assertSequenceEqual({'l','o', "\xA0"}, result.chars)
+
 
 
 class AssParsingTests(unittest.TestCase):

@@ -1,7 +1,6 @@
 from collections import namedtuple, defaultdict
 import logging
 from re import compile
-import sys
 
 
 class StyleInfo(object):
@@ -110,7 +109,8 @@ class AssParser(object):
         initial = style.clone()
         overriden = False
         for block in blocks:
-            if isinstance(block, AssParser.AssBlockOverride):
+            try:
+                #if isinstance(block, AssParser.AssBlockOverride):
                 for tag in block.tags:
                     if tag.name == 'r':
                         style = styles[tag.get_value(event.style)].clone()
@@ -124,7 +124,7 @@ class AssParser(object):
                     elif tag.name == 'fn':
                         style = StyleInfo(tag.get_value(initial.fontname), style.bold, style.italic)
                         overriden = True
-            else: #AssParser.AssBlockPlain
+            except AttributeError: #AssParser.AssBlockPlain
                 if not block.text:
                     continue
 
@@ -132,21 +132,8 @@ class AssParser(object):
                 if overriden:
                     used_style.lines.add(event.line_number)
 
-                idx = 0
-                strlen = len(block.text)
-                while idx < strlen:
-                    cur = block.text[idx]
-                    if cur == '\\' and idx != (strlen - 1):
-                        idx += 1
-                        next = block.text[idx]
-                        if next == 'N' or next == 'n':
-                            continue
-                        if next == 'h':
-                            cur = 0xA0 #I don't even
-                        else:
-                            idx -= 1
-                    used_style.chars.add(cur)
-                    idx += 1
+                str = block.text.replace(r'\n','').replace(r'\N','').replace(r'\h', "\xA0")
+                used_style.chars.update(str)
 
 
     @staticmethod
