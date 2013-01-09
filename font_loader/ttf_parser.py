@@ -10,10 +10,14 @@ NameRecord = namedtuple('NameRecord', ['platform_id', 'encoding_id', 'language_i
 
 
 class TTFFont(object):
-    platform_id_2_encodings = {
-        0:'ascii',
-        1:'ISO-10646',
-        2:'ISO-8859-1'
+    platform_id_3_encodings = {
+        0:'ISO-8859-1',
+        1:'utf-16be',
+        2:'shift-jis',
+        3:'gb2312',
+        4:'big5',
+        6:'johab',
+        10:'utf-16be'
     }
 
     class TTFNameId:
@@ -74,20 +78,30 @@ class TTFFont(object):
                 for name in names:
                     file.seek(table_directory.offset + naming_table.offset_start_of_string_storage + name.offset_from_storage_area)
                     size = int(name.string_length)
-                    if name.platform_id == 0 or name.platform_id == 3:
-                        value = struct.unpack('>' + str(size)+'s', file.read(size))[0].decode('utf-16be')
+                    string = file.read(size)
+                    if name.platform_id == 3:
+                        value = self.__decode_string(string,self.platform_id_3_encodings[name.encoding_id])
 
                     elif name.platform_id == 2:
-                        value = struct.unpack('>' + str(size)+'s', file.read(size))[0].decode(self.platform_id_2_encodings[name.encoding_id])
+                        value = self.__decode_string(string,'ISO 8859-1')
 
                     elif name.platform_id == 1:
                         #this is probably 'a bit' broken
-                        value = struct.unpack('>' + str(size)+'s', file.read(size))[0].decode('ISO 8859-1')
+                        value = self.__decode_string(string,'ISO 8859-1')
+                    elif name.platform_id == 0:
+                        try:
+                            value = self.__decode_string(string,'utf-16be')
+                        except UnicodeDecodeError:
+                            logging.debug("Couldn't decode a string with PlatformID = 0 as UTF-16, trying UTF-8. Font file: %s. Name data: %s" % (path, str(name)))
+                            value = self.__decode_string(string,'utf-8')
                     else:
                         logging.warning("Error while parsing font file %s. Name data: %s" % (path, str(name)))
                         value = ''
                     self.__set_name_by_id(name.name_id, value)
                 return
+
+    def __decode_string(self,bytes,encoding):
+        return struct.unpack('>' + str(len(bytes))+'s', bytes)[0].decode(encoding)
 
     def __set_name_by_id(self, id, value):
         if id is self.TTFNameId.FontFamilyName or id is self.TTFNameId.FullFontName:
