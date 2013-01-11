@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import os
 import unittest
 from tests.font_parsing_tests import *
