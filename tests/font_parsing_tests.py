@@ -84,6 +84,14 @@ class TTFFontTests(unittest.TestCase):
         self.assertIs(font.get_info().italic, True)
         self.assertIs(font.get_info().bold, True)
 
+    def test_parses_fonts_with_platform_id_2_strings(self):
+        font = TTFFont(get_file_in_test_directory('VANTATHI.TTF'))
+        self.assertIn('Vanta Thin', font.get_info().names)
+
+    def test_parses_fonts_with_utf8_platform_id_0_strings(self):
+        font = TTFFont(get_file_in_test_directory('SUSANNA_.otf'))
+        self.assertIn('Susanna', font.get_info().names)
+
 class TTCFontTests(unittest.TestCase):
     def test_contains_all_names(self):
         font = TTCFont(get_file_in_test_directory('jorvik_and_seriously.ttc'))
