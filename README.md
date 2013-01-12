@@ -1,5 +1,7 @@
 ## ASS font collector. ##
 
+**You need Python 3.x to run this script.**
+
 **Important**
 - Try rebuild cache before submitting any issues.
 - All fonts included in tests\files folders are purely for testing. Do not use it as you please since it might be agains its licenses.
@@ -11,6 +13,8 @@ This is a Python program for automatic collecting of fonts used in ass script. I
 Despite being written in Python it's still pretty fast, mostly thanks to [caching][caching]. Some code still needs optimizing, but we're working on it.
 
 You can find more information in project [wiki][wiki].
+
+It works only on Python 3.x (3.2 and 3.3 at least), Windows and Linux. 
 
 ### Contacts ###
 Feel free to submit any bugs or feature requests to `tp7` or `tonik` on `irc.rizon.net`, but preffered way is opening an issue here.
