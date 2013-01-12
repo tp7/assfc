@@ -187,7 +187,7 @@ class AssParser(object):
         try:
             with open(path, encoding='utf-8') as file:
                 script = file.read()
-        except FileNotFoundError:
+        except IOError:
             logging.critical("Script at path %s wasn't found" % path)
             sys.exit(2)
         styles = {}

@@ -90,7 +90,7 @@ class FontLoader(object):
             removed = cached_paths.difference(fonts_paths)
             added = fonts_paths.difference(cached_paths)
             self.fonts = list(filter(lambda x: x.path not in removed, cached_fonts))
-        except FileNotFoundError:
+        except IOError:
             logging.debug("Font cache file wasn't found. Will create new one.")
             #log file wasn't found
             added = fonts_paths
