@@ -37,16 +37,16 @@ class FontLoaderTests(unittest.TestCase):
 
     def test_finds_all_required_fonts(self):
         loader = FontLoader(None, True)
-        loader.fonts.append(FontInfo(['Arial'], False, False, 'random', '1'))
-        loader.fonts.append(FontInfo(['Arial Black'], False, False, 'random', '2'))
+        loader.fonts.append(FontInfo(['Arial'], False, False, 400, 'random', '1'))
+        loader.fonts.append(FontInfo(['Arial Black'], False, False, 400, 'random', '2'))
         data = {StyleInfo('Arial', False, False) : UsageData(), StyleInfo('Arial Black', False, False) : UsageData()}
         found, not_found = loader.get_fonts_for_list(data)
         self.assertEqual(2, len(found))
 
     def test_returns_only_appropriate_font(self):
         loader = FontLoader(None, True)
-        loader.fonts.append(FontInfo(['Arial'], False, False, 'random', '1'))
-        loader.fonts.append(FontInfo(['Arial Black'], False, False, 'random', '2'))
+        loader.fonts.append(FontInfo(['Arial'], False, False, 400, 'random', '1'))
+        loader.fonts.append(FontInfo(['Arial Black'], False, False, 400, 'random', '2'))
         data = {StyleInfo('Arial', False, False) : UsageData()}
         found, not_found = loader.get_fonts_for_list(data)
         self.assertEqual(1, len(found))
@@ -85,6 +85,18 @@ class TTFFontTests(unittest.TestCase):
         font = TTFFont(get_file_in_test_directory('SUSANNA_.otf'))
         self.assertIn('Susanna', font.get_info().names)
 
+    def test_detects_bold_weight(self):
+        font = TTFFont(get_file_in_test_directory('Caviar Dreams Bold.ttf'))
+        self.assertEqual(font.get_info().weight, 700)
+
+    def test_detects_regular_weight(self):
+        font = TTFFont(get_file_in_test_directory('Jorvik.ttf'))
+        self.assertEqual(font.get_info().weight, 400)
+
+    def test_detects_medium_weight(self):
+        font = TTFFont(get_file_in_test_directory('seriously.ttf'))
+        self.assertEqual(font.get_info().weight, 500)
+
 class TTCFontTests(unittest.TestCase):
     def test_contains_all_names(self):
         font = TTCFont(get_file_in_test_directory('jorvik_and_seriously.ttc'))
@@ -93,15 +105,15 @@ class TTCFontTests(unittest.TestCase):
 
 class FontInfoTests(unittest.TestCase):
     def test_calculates_md5_on_access(self):
-        info = FontInfo([], False, False, get_file_in_test_directory('Jorvik.ttf'), None)
+        info = FontInfo([], False, False, 0, get_file_in_test_directory('Jorvik.ttf'), None)
         self.assertIsNotNone(info.md5)
 
     def test_calculates_correct_md5(self):
-        info = FontInfo([], False, False, get_file_in_test_directory('Jorvik.ttf'), None)
+        info = FontInfo([], False, False, 0, get_file_in_test_directory('Jorvik.ttf'), None)
         self.assertEqual(info.md5, '0dae05c47e919281d7ac1e0170e4d3a8')
 
     def test_caches_md5_in_private_field(self):
-        info = FontInfo([], False, False, get_file_in_test_directory('Jorvik.ttf'), None)
+        info = FontInfo([], False, False, 0, get_file_in_test_directory('Jorvik.ttf'), None)
         self.assertIsNone(info._FontInfo__md5)
         md5 = info.md5
         self.assertIsNotNone(info._FontInfo__md5)

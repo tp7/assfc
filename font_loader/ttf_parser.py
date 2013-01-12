@@ -7,6 +7,7 @@ OffsetTable = namedtuple('OffsetTable', ['version', 'num_tables', 'search_range'
 TableDirectory = namedtuple('TableDirectory', ['tag', 'check_sum', 'offset', 'length'])
 NamingTable = namedtuple('NamingTable', ['format_selector', 'number_of_name_records', 'offset_start_of_string_storage'])
 NameRecord = namedtuple('NameRecord', ['platform_id', 'encoding_id', 'language_id', 'name_id', 'string_length', 'offset_from_storage_area'])
+OS2Table = namedtuple('OS2Table',['version', 'avg_char_width', 'weight_class'])
 
 
 class TTFFont(object):
@@ -56,49 +57,62 @@ class TTFFont(object):
     def parse(self, path, offset):
         with open(path,'rb') as file:
             file.seek(offset)
-            data =  struct.unpack('>IHHHH', file.read(12))
+            data = struct.unpack('>IHHHH', file.read(12))
             offset_table = OffsetTable._make(data)
+            pos = file.tell()
 
             for i in range(offset_table.num_tables):
+                file.seek(pos)
                 data = struct.unpack('>4sLLL', file.read(16))
                 table_directory = TableDirectory(data[0].decode('utf-8'), data[1], data[2], data[3])
+                pos = file.tell()
 
-                if table_directory.tag != 'name':
-                    continue
+                if table_directory.tag == 'name':
+                    self.__parse_name_table(file,table_directory.offset)
 
-                file.seek(table_directory.offset)
-                data =  struct.unpack('>HHH', file.read(6))
-                naming_table = NamingTable._make(data)
+                if table_directory.tag == 'OS/2':
+                    self.__parse_os2_table(file,table_directory.offset)
 
-                names = []
-                for record in range(naming_table.number_of_name_records):
-                    data = struct.unpack('>HHHHHH', file.read(12))
-                    names.append(NameRecord._make(data))
+    def __parse_os2_table(self,file,offset):
+        file.seek(offset)
+        data = struct.unpack('>HhH',file.read(6))
+        os2_table = OS2Table(data[0],data[1],data[2])
+        self.__weight = os2_table.weight_class
 
-                for name in names:
-                    file.seek(table_directory.offset + naming_table.offset_start_of_string_storage + name.offset_from_storage_area)
-                    size = int(name.string_length)
-                    string = file.read(size)
-                    if name.platform_id == 3:
-                        value = self.__decode_string(string,self.platform_id_3_encodings[name.encoding_id])
+    def __parse_name_table(self,file,offset):
+        file.seek(offset)
+        data = struct.unpack('>HHH', file.read(6))
+        naming_table = NamingTable._make(data)
 
-                    elif name.platform_id == 2:
-                        value = self.__decode_string(string,'ISO 8859-1')
+        names = []
+        for record in range(naming_table.number_of_name_records):
+            data = struct.unpack('>HHHHHH', file.read(12))
+            names.append(NameRecord._make(data))
 
-                    elif name.platform_id == 1:
-                        #this is probably 'a bit' broken
-                        value = self.__decode_string(string,'ISO 8859-1')
-                    elif name.platform_id == 0:
-                        try:
-                            value = self.__decode_string(string,'utf-16be')
-                        except UnicodeDecodeError:
-                            logging.debug("Couldn't decode a string with PlatformID = 0 as UTF-16, trying UTF-8. Font file: %s. Name data: %s" % (path, str(name)))
-                            value = self.__decode_string(string,'utf-8')
-                    else:
-                        logging.error("Unknown Platform Id in font file %s. Name data: %s" % (path, str(name)))
-                        continue
-                    self.__set_name_by_id(name.name_id, value)
-                return
+        for name in names:
+            file.seek(offset + naming_table.offset_start_of_string_storage + name.offset_from_storage_area)
+            size = int(name.string_length)
+            string = file.read(size)
+            if name.platform_id == 3:
+                value = self.__decode_string(string,self.platform_id_3_encodings[name.encoding_id])
+
+            elif name.platform_id == 2:
+                value = self.__decode_string(string,'ISO 8859-1')
+
+            elif name.platform_id == 1:
+                value = self.__decode_string(string,'ISO 8859-1')
+
+            elif name.platform_id == 0:
+                try:
+                    value = self.__decode_string(string,'utf-16be')
+                except UnicodeDecodeError:
+                    logging.debug("Couldn't decode a string with PlatformID = 0 as UTF-16, trying UTF-8. Font file: %s. Name data: %s" % (self.__path, str(name)))
+                    value = self.__decode_string(string,'utf-8')
+            else:
+                logging.error("Unknown Platform Id in font file %s. Name data: %s" % (self.__path, str(name)))
+                continue
+            self.__set_name_by_id(name.name_id, value)
+        return
 
     def __decode_string(self,bytes,encoding):
         return struct.unpack('>' + str(len(bytes))+'s', bytes)[0].decode(encoding)
@@ -124,5 +138,5 @@ class TTFFont(object):
             print(str(types[id]).ljust(25), value)
 
     def get_info(self):
-        return FontInfo(list(self.__names), self.__bold, self.__italic, self.__path, None)
+        return FontInfo(list(self.__names), self.__bold, self.__italic, self.__weight, self.__path, None)
 

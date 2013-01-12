@@ -1,12 +1,13 @@
 from misc import calculate_md5_for_file
 
 class FontInfo(object):
-    __slots__ = ['names', 'bold', 'italic', 'path', '__md5']
+    __slots__ = ['names', 'bold', 'italic', 'weight', 'path', '__md5']
 
-    def __init__(self, names, bold, italic, path, md5):
+    def __init__(self, names, bold, italic, weight, path, md5):
         self.names = names
         self.bold = bold
         self.italic = italic
+        self.weight = weight
         self.path = path
         self.__md5 = md5
 
