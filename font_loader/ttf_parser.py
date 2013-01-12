@@ -95,8 +95,8 @@ class TTFFont(object):
                             logging.debug("Couldn't decode a string with PlatformID = 0 as UTF-16, trying UTF-8. Font file: %s. Name data: %s" % (path, str(name)))
                             value = self.__decode_string(string,'utf-8')
                     else:
-                        logging.warning("Error while parsing font file %s. Name data: %s" % (path, str(name)))
-                        value = ''
+                        logging.error("Unknown Platform Id in font file %s. Name data: %s" % (path, str(name)))
+                        continue
                     self.__set_name_by_id(name.name_id, value)
                 return
 

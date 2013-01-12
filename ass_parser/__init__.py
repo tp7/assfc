@@ -1,6 +1,8 @@
 from collections import namedtuple, defaultdict
 import logging
 from re import compile
+import sys
+
 
 class StyleInfo(object):
     __slots__ = ['fontname', 'bold', 'italic']
@@ -68,7 +70,11 @@ class AssParser(object):
 
     @staticmethod
     def get_fonts_statistics(path, exclude_unused_fonts = False, exclude_comments = False):
-        styles, events = AssParser.read_script(path)
+        try:
+            styles, events = AssParser.read_script(path)
+        except Exception as e:
+            logging.critical('Failed to parse script %s: %s' % (path, e))
+            sys.exit(1)
         used_styles = defaultdict(UsageData)
 
         for name, info in styles.items():
@@ -182,8 +188,8 @@ class AssParser(object):
             with open(path, encoding='utf-8') as file:
                 script = file.read()
         except FileNotFoundError:
-            logging.error("Script at path %s wasn't found" % path)
-            raise exit(0)
+            logging.critical("Script at path %s wasn't found" % path)
+            sys.exit(2)
         styles = {}
         events = []
         idx = 1

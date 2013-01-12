@@ -67,8 +67,8 @@ def copy_fonts_to_folder(folder, fonts):
     if not os.path.exists(folder):
         os.mkdir(folder)
     if not os.path.isdir(folder):
-        logging.error('File with the same name already exists at %s' % folder)
-        exit(1)
+        logging.critical('File with the same name already exists at %s' % folder)
+        sys.exit(1)
     for font in fonts:
         filename = os.path.basename(font.path)
         dest = os.path.join(folder, filename)

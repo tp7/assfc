@@ -91,6 +91,7 @@ class FontLoader(object):
             added = fonts_paths.difference(cached_paths)
             self.fonts = list(filter(lambda x: x.path not in removed, cached_fonts))
         except FileNotFoundError:
+            logging.debug("Font cache file wasn't found. Will create new one.")
             #log file wasn't found
             added = fonts_paths
 
@@ -101,7 +102,7 @@ class FontLoader(object):
                 else:
                     self.fonts.append(TTFFont(font_path).get_info())
             except Exception as e:
-                logging.warning('%s on file %s: %s' % (type(e).__name__, font_path, e,))
+                logging.error('%s on file %s: %s' % (type(e).__name__, font_path, e,))
 
 
         if added or removed:
