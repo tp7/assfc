@@ -2,7 +2,6 @@ from collections import defaultdict
 import logging
 import unittest
 from ass_parser import AssParser, StyleInfo, UsageData
-from font_loader import FontLoader
 from tests.common import get_file_in_test_directory, disabled_logging
 
 class StyleInfoTests(unittest.TestCase):
@@ -127,12 +126,12 @@ class TagsParsingTests(unittest.TestCase):
             blocks = AssParser.parse_tags(r'{\b1\b0blablabla')
         self.assertIsInstance(blocks[0], AssParser.AssBlockPlain)
 
-    def does_not_include_comments(self):
+    def test_does_not_include_comments(self):
         blocks = AssParser.parse_tags(r'{comment line}text')
         self.assertTrue(len(blocks),1)
         self.assertIsInstance(blocks[0], AssParser.AssBlockPlain)
 
-    def does_not_include_completely_empty_override_blocks(self):
+    def test_does_not_include_completely_empty_override_blocks(self):
         blocks = AssParser.parse_tags(r'{}text')
         self.assertTrue(len(blocks),1)
         self.assertIsInstance(blocks[0], AssParser.AssBlockPlain)
@@ -194,7 +193,7 @@ class AssParsingTests(unittest.TestCase):
                 found = value
         self.assertEqual(len(found.styles), 1)
 
-    def gets_correct_count_of_lines_font_used_in(self):
+    def test_gets_correct_count_of_lines_font_used_in(self):
         stat = AssParser.get_fonts_statistics(get_file_in_test_directory('1.ass'), False, False)
         for key, value in stat.items():
             if key.fontname == 'this is totally not real font':
@@ -204,7 +203,10 @@ class AssParsingTests(unittest.TestCase):
     @unittest.skip
     def test_does_not_remove_styles_used_in_r(self):
         stat = AssParser.get_fonts_statistics(get_file_in_test_directory('2.ass'), True, True)
-        print(len(stat))
+        styles = set()
+        for info in stat.values():
+            styles.update(info.styles)
+        self.assertIn('EDromajiEng', styles)
 
 
 
