@@ -17,3 +17,14 @@ class FontInfo(object):
             self.__md5 = calculate_md5_for_file(self.path)
         return self.__md5
 
+class FontWeight(object):
+    FW_THIN = 100
+    FW_EXTRALIGHT = 200
+    FW_LIGHT = 300
+    FW_NORMAL = 400
+    FW_MEDIUM = 500
+    FW_SEMIBOLD = 600
+    FW_BOLD = 700
+    FW_EXTRABOLD = 800
+    FW_BLACK = 900
+

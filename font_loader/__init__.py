@@ -4,7 +4,7 @@ from fnmatch import fnmatch
 import logging
 import sys
 import pickle
-from font_loader.font_info import FontInfo
+from font_loader.font_info import FontInfo, FontWeight
 from font_loader.ttf_parser import TTFFont
 from font_loader.ttc_parser import TTCFont
 from misc import get_app_data_folder, enumerate_files_in_directory, read_linux_font_dirs

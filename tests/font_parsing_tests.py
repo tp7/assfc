@@ -2,7 +2,7 @@ import logging
 import unittest
 from functools import reduce
 from ass_parser import StyleInfo, UsageData
-from font_loader import TTFFont, FontInfo, FontLoader, TTCFont
+from font_loader import TTFFont, FontInfo, FontLoader, TTCFont, FontWeight
 from tests.common import get_file_in_test_directory
 
 class FontLoaderTests(unittest.TestCase):
@@ -37,16 +37,16 @@ class FontLoaderTests(unittest.TestCase):
 
     def test_finds_all_required_fonts(self):
         loader = FontLoader(None, True)
-        loader.fonts.append(FontInfo(['Arial'], False, False, 400, 'random', '1'))
-        loader.fonts.append(FontInfo(['Arial Black'], False, False, 400, 'random', '2'))
+        loader.fonts.append(FontInfo(['Arial'], False, False, FontWeight.FW_NORMAL, 'random', '1'))
+        loader.fonts.append(FontInfo(['Arial Black'], False, False, FontWeight.FW_NORMAL, 'random', '2'))
         data = {StyleInfo('Arial', False, False) : UsageData(), StyleInfo('Arial Black', False, False) : UsageData()}
         found, not_found = loader.get_fonts_for_list(data)
         self.assertEqual(2, len(found))
 
     def test_returns_only_appropriate_font(self):
         loader = FontLoader(None, True)
-        loader.fonts.append(FontInfo(['Arial'], False, False, 400, 'random', '1'))
-        loader.fonts.append(FontInfo(['Arial Black'], False, False, 400, 'random', '2'))
+        loader.fonts.append(FontInfo(['Arial'], False, False, FontWeight.FW_NORMAL, 'random', '1'))
+        loader.fonts.append(FontInfo(['Arial Black'], False, False, FontWeight.FW_NORMAL, 'random', '2'))
         data = {StyleInfo('Arial', False, False) : UsageData()}
         found, not_found = loader.get_fonts_for_list(data)
         self.assertEqual(1, len(found))
@@ -87,15 +87,15 @@ class TTFFontTests(unittest.TestCase):
 
     def test_detects_bold_weight(self):
         font = TTFFont(get_file_in_test_directory('Caviar Dreams Bold.ttf'))
-        self.assertEqual(font.get_info().weight, 700)
+        self.assertEqual(font.get_info().weight, FontWeight.FW_BOLD)
 
     def test_detects_regular_weight(self):
         font = TTFFont(get_file_in_test_directory('Jorvik.ttf'))
-        self.assertEqual(font.get_info().weight, 400)
+        self.assertEqual(font.get_info().weight, FontWeight.FW_NORMAL)
 
     def test_detects_medium_weight(self):
         font = TTFFont(get_file_in_test_directory('seriously.ttf'))
-        self.assertEqual(font.get_info().weight, 500)
+        self.assertEqual(font.get_info().weight, FontWeight.FW_MEDIUM)
 
 class TTCFontTests(unittest.TestCase):
     def test_contains_all_names(self):
