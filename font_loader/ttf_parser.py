@@ -13,7 +13,7 @@ class TTFFont(object):
     platform_id_3_encodings = {
         0:'ISO-8859-1',
         1:'utf-16be',
-        2:'ISO-8859-1', #todo: 'shift-jis' didn't work here
+        2:'utf-16be',
         3:'gb2312',
         4:'big5',
         6:'johab',
