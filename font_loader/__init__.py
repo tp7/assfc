@@ -7,7 +7,7 @@ import pickle
 from font_loader.font_info import FontInfo
 from font_loader.ttf_parser import TTFFont
 from font_loader.ttc_parser import TTCFont
-from misc import get_app_data_folder, enumerate_files_in_directory, get_windows_system_fonts_folder, read_linux_font_dirs
+from misc import get_app_data_folder, enumerate_files_in_directory, read_linux_font_dirs
 
 
 is_supported_font = lambda x: os.path.splitext(x)[1].lower() in {'.ttf', '.otf', '.ttc'}
@@ -90,16 +90,19 @@ class FontLoader(object):
             removed = cached_paths.difference(fonts_paths)
             added = fonts_paths.difference(cached_paths)
             self.fonts = list(filter(lambda x: x.path not in removed, cached_fonts))
-        except:
-            print(sys.exc_info())
-            #we don't care what happened - just reindex everything
+        except FileNotFoundError:
+            #log file wasn't found
             added = fonts_paths
 
         for font_path in added:
-            if fnmatch(font_path, '*.ttc'):
-                self.fonts.extend(TTCFont(font_path).get_infos())
-            else:
-                self.fonts.append(TTFFont(font_path).get_info())
+            try:
+                if fnmatch(font_path, '*.ttc'):
+                    self.fonts.extend(TTCFont(font_path).get_infos())
+                else:
+                    self.fonts.append(TTFFont(font_path).get_info())
+            except Exception as e:
+                logging.warning('%s on file %s: %s' % (type(e).__name__, font_path, e,))
+
 
         if added or removed:
             # updating the cache
@@ -127,7 +130,7 @@ class FontLoader(object):
         with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Fonts\\") as key:
             paths = []
             info = winreg.QueryInfoKey(key)
-            fonts_root = get_windows_system_fonts_folder()
+            fonts_root = os.path.join(os.environ['SYSTEMROOT'], 'Fonts')
             for index in range(info[1]):
                 value = winreg.EnumValue(key, index)
                 path = value[1] if os.path.isabs(value[1]) else os.path.join(fonts_root, value[1])

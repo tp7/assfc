@@ -6,12 +6,6 @@ from font_loader import TTFFont, FontInfo, FontLoader, TTCFont
 from tests.common import get_file_in_test_directory
 
 class FontLoaderTests(unittest.TestCase):
-    def setUp(self):
-        logging.disable(logging.WARNING)
-
-    def tearDown(self):
-        logging.disable(logging.NOTSET)
-
     def test_returns_all_not_found_fonts(self):
         loader = FontLoader(None, True)
         data = {StyleInfo('Jorvik', False, False) : UsageData(), StyleInfo('Random font', False, False) : UsageData()}
@@ -57,7 +51,6 @@ class FontLoaderTests(unittest.TestCase):
         found, not_found = loader.get_fonts_for_list(data)
         self.assertEqual(1, len(found))
 
-
 class TTFFontTests(unittest.TestCase):
     def test_ttf_name_matches(self):
         font = TTFFont(get_file_in_test_directory('seriously.ttf'))
@@ -97,7 +90,6 @@ class TTCFontTests(unittest.TestCase):
         font = TTCFont(get_file_in_test_directory('jorvik_and_seriously.ttc'))
         self.assertIn('Seriously', reduce(lambda names, info: names + info.names, font.get_infos(), []))
         self.assertIn('Jorvik Informal V2', reduce(lambda names, info: names + info.names, font.get_infos(), []))
-
 
 class FontInfoTests(unittest.TestCase):
     def test_calculates_md5_on_access(self):

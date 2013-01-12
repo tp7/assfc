@@ -43,32 +43,16 @@ class StyleInfoTests(unittest.TestCase):
         original.bold = True
         self.assertNotEqual(original, new)
 
-    def from_ass_returns_compares_true_and_false_with_minus_one(self):
-        item = StyleInfo.from_ass('font', -123123123, -1)
+    def test_from_ass_returns_compares_true_and_false_with_minus_one(self):
+        item = StyleInfo.from_ass('font', '-123123123', '-1')
         self.assertTrue(item.italic)
         self.assertFalse(item.bold)
-
-
-#class AssTagTests(unittest.TestCase):
-#    def test_returns_default_if_value_is_none(self):
-#        tag = AssParser.AssTag('tag', None)
-#        self.assertTrue(tag.get_value(True))
-#
-#    def test_returns_default_if_value_is_empty_string(self):
-#        tag = AssParser.AssTag('tag', '')
-#        self.assertTrue(tag.get_value(True))
-#
-#    def test_returns_value_if_it_exists(self):
-#        tag = AssParser.AssTag('tag', False)
-#        self.assertFalse(tag.get_value(True))
-
 
 class AssBlockOverrideTests(unittest.TestCase):
     def test_does_not_include_blur(self):
         block = AssParser.AssBlockOverride(r'\blur12\fnFont\i1')
         with self.assertRaises(KeyError):
             tag = block.tags['b']
-#        self.assertIsNone(block.get_tag('b'))
 
     def test_returns_correct_value_for_italic_and_bold_when_specified_as_a_single_digit(self):
         block = AssParser.AssBlockOverride(r'\blur12\b0\fnFont\i1')
@@ -104,6 +88,18 @@ class AssBlockOverrideTests(unittest.TestCase):
         block = AssParser.AssBlockOverride(r'\blur12\b123\fnFont')
         self.assertEqual(block.tags['b'], '123')
 
+    def test_get_tag_raises_key_error_if_tag_is_not_present(self):
+        block = AssParser.AssBlockOverride('')
+        with self.assertRaises(KeyError):
+            value = block.get_tag('b', 12)
+
+    def test_get_tag_returns_default_if_value_is_empty_string(self):
+        block = AssParser.AssBlockOverride(r'\b\p1')
+        self.assertEqual(block.get_tag('b', 12), 12)
+
+    def test_get_tag_returns_value_if_it_exists(self):
+        block = AssParser.AssBlockOverride(r'\b1\p1')
+        self.assertTrue(block.get_tag('b', 12), 1)
 
 class TagsParsingTests(unittest.TestCase):
     def test_returns_empty_list_on_empty_string(self):
@@ -172,8 +168,6 @@ class EventProcessingTests(unittest.TestCase):
         AssParser.process_event(event, used_styles, styles)
         result = list(used_styles.values())[0]
         self.assertSequenceEqual({'l','o', "\xA0"}, result.chars)
-
-
 
 class AssParsingTests(unittest.TestCase):
     def test_returns_correct_number_of_all_fonts_in_bakemono_script(self):
