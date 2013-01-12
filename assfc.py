@@ -126,18 +126,18 @@ if __name__ == '__main__':
     group.add_argument('--without-system', action='store_false', dest='include_system_fonts', help='Exclude system fonts')
 
     group = parser.add_mutually_exclusive_group()
-    group.add_argument('--exclude-comments', action='store_true', dest='exclude_comments', help='Include system fonts')
-    group.add_argument('--include-comments', action='store_false', dest='exclude_comments', help='Include system fonts')
+    group.add_argument('--exclude-comments', action='store_true', dest='exclude_comments', help='Exclude comments')
+    group.add_argument('--include-comments', action='store_false', dest='exclude_comments', help='Include comments')
 
     group = parser.add_mutually_exclusive_group()
-    group.add_argument('--exclude-unused-fonts', action='store_true', dest='exclude_unused_fonts', help='Include fonts without any glyphs used')
+    group.add_argument('--exclude-unused-fonts', action='store_true', dest='exclude_unused_fonts', help='Exclude fonts without any glyphs used')
     group.add_argument('--include-unused-fonts', action='store_false', dest='exclude_unused_fonts', help='Include fonts without any glyphs used')
 
-    parser.add_argument('-v','--verbose', action='store_true', dest='verbose', help='show current frame')
+    parser.add_argument('-v','--verbose', action='store_true', dest='verbose', help='print additional log info (debug level)')
     parser.add_argument('--log', dest='log_file', metavar='file', help='Output log to file')
     parser.add_argument('--rebuild-cache', action='store_true', dest='rebuild_cache', help='Rebuild font cache')
 
-    parser.add_argument('-o', default=None, dest='output_location', metavar='folder/file', help='output folder or mks file')
+    parser.add_argument('-o', '--output', default=None, dest='output_location', metavar='folder/file', help='output folder or mks file')
     parser.add_argument('script', default=None, help='input script')
     parser.set_defaults(include_system_fonts = None, exclude_comments=None, exclude_unused_fonts = None,
                         verbose = None, log_file = None, rebuild_cache=False, output_location=None)
