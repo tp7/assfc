@@ -27,7 +27,7 @@ class TTFFont(object):
         UniqueIdentifier = 3
         FullFontName = 4
         Version = 5
-        PostScriptName = 6,
+        PostScriptName = 6
         Trademark = 7
         ManufacturerName = 8
         Designer = 9
@@ -117,6 +117,11 @@ class TTFFont(object):
             self.__bold = True
         if name.find('italic') is not -1:
             self.__italic = True
+
+    def print_headers(self):
+        types = {value:key for key, value in self.TTFNameId.__dict__.items()}
+        for id, value in self.headers.items():
+            print(str(types[id]).ljust(25), value)
 
     def get_info(self):
         return FontInfo(list(self.__names), self.__bold, self.__italic, self.__path, None)

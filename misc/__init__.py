@@ -78,9 +78,6 @@ def read_linux_font_dirs():
     with open('/etc/fonts/fonts.conf') as file:
         return linux_font_dir.findall(file.read())
 
-#def get_windows_system_fonts_folder():
-#    return os.path.join(os.environ['SYSTEMROOT'], 'Fonts')
-
 APPNAME = "assfc"
 
 def get_app_data_folder():

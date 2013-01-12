@@ -179,8 +179,12 @@ class AssParser(object):
 
     @staticmethod
     def read_script(path):
-        with open(path, encoding='utf-8') as file:
-            script = file.read()
+        try:
+            with open(path, encoding='utf-8') as file:
+                script = file.read()
+        except FileNotFoundError:
+            logging.error("Script at path %s wasn't found" % path)
+            raise exit(0)
         styles = {}
         events = []
         idx = 1
