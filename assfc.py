@@ -15,7 +15,7 @@ from shutil import copy2 as copyfile
 default_config = { "font_dirs":[],
             "include_system_fonts":True,
             "verbose":False,
-            "exclude_unused_styles":False,
+            "exclude_unused_fonts":False,
             "exclude_comments":False,
             "log_file":None}
 
@@ -83,7 +83,7 @@ def process(args):
     start_time = time()
     logging.info('-----Started new task at %s-----' % str(ctime()))
 
-    fonts =  AssParser.get_fonts_statistics(os.path.abspath(config['script']), config['exclude_unused_styles'], config['exclude_comments'])
+    fonts =  AssParser.get_fonts_statistics(os.path.abspath(config['script']), config['exclude_unused_fonts'], config['exclude_comments'])
 
     if config['rebuild_cache']:
         FontLoader.discard_cache()
@@ -130,8 +130,8 @@ if __name__ == '__main__':
     group.add_argument('--include-comments', action='store_false', dest='exclude_comments', help='Include system fonts')
 
     group = parser.add_mutually_exclusive_group()
-    group.add_argument('--exclude-unused-styles', action='store_true', dest='exclude_unused_styles', help='Include system fonts')
-    group.add_argument('--include-unused-styles', action='store_false', dest='exclude_unused_styles', help='Include system fonts')
+    group.add_argument('--exclude-unused-fonts', action='store_true', dest='exclude_unused_fonts', help='Include fonts without any glyphs used')
+    group.add_argument('--include-unused-fonts', action='store_false', dest='exclude_unused_fonts', help='Include fonts without any glyphs used')
 
     parser.add_argument('-v','--verbose', action='store_true', dest='verbose', help='show current frame')
     parser.add_argument('--log', dest='log_file', metavar='file', help='Output log to file')
@@ -139,7 +139,7 @@ if __name__ == '__main__':
 
     parser.add_argument('-o', default=None, dest='output_location', metavar='folder/file', help='output folder or mks file')
     parser.add_argument('script', default=None, help='input script')
-    parser.set_defaults(include_system_fonts = None, exclude_comments=None, exclude_unused_styles = None,
+    parser.set_defaults(include_system_fonts = None, exclude_comments=None, exclude_unused_fonts = None,
                         verbose = None, log_file = None, rebuild_cache=False, output_location=None)
     args = parser.parse_args(sys.argv[1:])
     process(args)

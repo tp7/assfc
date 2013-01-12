@@ -106,7 +106,7 @@ class TagsParsingTests(unittest.TestCase):
         blocks = AssParser.parse_tags('')
         self.assertFalse(blocks)
 
-    def test_returns_correct_number_of_blocks_but_does_not_include_uselss_ones(self):
+    def test_returns_correct_number_of_blocks_but_does_not_include_useless_ones(self):
         blocks = AssParser.parse_tags(r"{\an5\blur1.1\fsp3\1a&H32\pos(962.2,918.8)}Animation number 392")
         self.assertEqual(len(blocks), 1)
 
@@ -174,7 +174,7 @@ class AssParsingTests(unittest.TestCase):
         stat = AssParser.get_fonts_statistics(get_file_in_test_directory('1.ass'), False, False)
         self.assertEqual(len(stat), 19)
 
-    def test_returns_correct_number_of_all_fonts_in_bakemono_script_without_unused_styles(self):
+    def test_returns_correct_number_of_all_fonts_in_bakemono_script_without_unused_fonts(self):
         stat = AssParser.get_fonts_statistics(get_file_in_test_directory('1.ass'), True, False)
         self.assertEqual(len(stat), 18)
 
@@ -182,7 +182,7 @@ class AssParsingTests(unittest.TestCase):
         stat = AssParser.get_fonts_statistics(get_file_in_test_directory('1.ass'), False, True)
         self.assertEqual(len(stat), 18)
 
-    def test_returns_correct_number_of_all_fonts_in_bakemono_script_without_unused_styles_and_comments(self):
+    def test_returns_correct_number_of_all_fonts_in_bakemono_script_without_unused_fonts_and_comments(self):
         stat = AssParser.get_fonts_statistics(get_file_in_test_directory('1.ass'), True, True)
         self.assertEqual(len(stat), 17)
 
@@ -200,7 +200,6 @@ class AssParsingTests(unittest.TestCase):
                 found = value
         self.assertEqual(len(found.lines), 1)
 
-    @unittest.skip
     def test_does_not_remove_styles_used_in_r(self):
         stat = AssParser.get_fonts_statistics(get_file_in_test_directory('2.ass'), True, True)
         styles = set()

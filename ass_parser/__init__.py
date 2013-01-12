@@ -67,16 +67,9 @@ class AssParser(object):
 #    Event format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 
     @staticmethod
-    def get_fonts_statistics(path, exclude_unused_styles = False, exclude_comments = False):
+    def get_fonts_statistics(path, exclude_unused_fonts = False, exclude_comments = False):
         styles, events = AssParser.read_script(path)
         used_styles = defaultdict(UsageData)
-
-        if exclude_unused_styles:
-            used = set(event.style for event in events)
-            for style in list(styles.keys()):
-                if style not in used:
-                    del styles[style]
-
 
         for name, info in styles.items():
             used_styles[info].styles.add(name)
@@ -85,6 +78,12 @@ class AssParser(object):
             if exclude_comments and event.is_comment:
                 continue
             AssParser.process_event(event, used_styles, styles)
+
+        if exclude_unused_fonts:
+            for info, usage in  list(used_styles.items()):
+                if not usage.chars:
+                    del used_styles[info]
+
         return used_styles
 
 
