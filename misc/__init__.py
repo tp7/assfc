@@ -42,7 +42,7 @@ def enumerate_files_in_directory(directory):
 def linux_enumerate_directory(directory, files_collection):
     for path, subdirs, files in os.walk(directory):
         for name in files:
-            files_collection.append({'path':os.path.join(path, name)})
+            files_collection.append(os.path.join(path, name))
 
 def windows_enumerate_directory(directory, files):
     from ctypes import windll, wintypes, byref
@@ -67,11 +67,7 @@ def windows_enumerate_directory(directory, files):
                 if isdir:
                     windows_enumerate_directory(os.path.join(directory, out.cFileName), files)
                 else:
-                    ts = out.ftLastWriteTime
-                    timestamp = (ts.dwLowDateTime << 32) | ts.dwHighDateTime
-                    size = out.nFileSizeLow
-                    path = os.path.join(directory, out.cFileName)
-                    files.append({'path': path, 'size': size, 'mod_date':timestamp})
+                    files.append(os.path.join(directory, out.cFileName))
             if not FindNextFile(fldr, byref(out)):
                 break
     finally:
@@ -82,10 +78,8 @@ def read_linux_font_dirs():
     with open('/etc/fonts/fonts.conf') as file:
         return linux_font_dir.findall(file.read())
 
-if sys.platform == 'win32':
-    SYSTEM_FONTS_FOLDERS = [os.path.join(os.environ['SYSTEMROOT'], 'Fonts')]
-else:
-    SYSTEM_FONTS_FOLDERS = read_linux_font_dirs()
+def get_windows_system_fonts_folder():
+    return os.path.join(os.environ['SYSTEMROOT'], 'Fonts')
 
 APPNAME = "assfc"
 

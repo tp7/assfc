@@ -7,7 +7,7 @@ import pickle
 from font_loader.font_info import FontInfo
 from font_loader.ttf_parser import TTFFont
 from font_loader.ttc_parser import TTCFont
-from misc import SYSTEM_FONTS_FOLDERS, get_app_data_folder, enumerate_files_in_directory
+from misc import get_app_data_folder, enumerate_files_in_directory, get_windows_system_fonts_folder, read_linux_font_dirs
 
 
 is_supported_font = lambda x: os.path.splitext(x)[1].lower() in {'.ttf', '.otf', '.ttc'}
@@ -17,11 +17,11 @@ class FontLoader(object):
         font_files = set()
 
         if load_system_fonts:
-            font_files.update(self.__enumerate_system_fonts())
+            font_files.update(self.enumerate_system_fonts())
 
         if font_dirs:
             for dir in font_dirs:
-                font_files.update(self.__enumerate_font_files(dir))
+                font_files.update(self.enumerate_font_files(dir))
 
         self.__load_fonts(font_files)
 
@@ -76,18 +76,6 @@ class FontLoader(object):
             logging.debug('Found font %s at %s' % (font_info, best_candidate.path))
         return found, not_found
 
-    @staticmethod
-    def __enumerate_font_files(directory):
-        files =  enumerate_files_in_directory(directory)
-        return [x['path'] for x in files if is_supported_font(x['path'])]
-
-    @staticmethod
-    def __enumerate_system_fonts():
-        system_fonts_paths = []
-        for f in SYSTEM_FONTS_FOLDERS:
-            system_fonts_paths.extend(FontLoader.__enumerate_font_files(f))
-        #todo: additional fonts from registry
-        return system_fonts_paths
 
     def __load_fonts(self, fonts_paths):
         cache_file = FontLoader.get_font_cache_file_path()
@@ -118,11 +106,50 @@ class FontLoader(object):
             with open(cache_file, 'wb') as file:
                 pickle.dump(self.fonts, file, -1)
 
+
+    @staticmethod
+    def enumerate_font_files(directory):
+        files =  enumerate_files_in_directory(directory)
+        return [x for x in files if is_supported_font(x)]
+
+
+    @staticmethod
+    def enumerate_linux_system_fonts():
+        paths = []
+        for f in read_linux_font_dirs():
+            paths.extend(FontLoader.enumerate_font_files(f))
+        return paths
+
+
+    @staticmethod
+    def enumerate_windows_system_fonts():
+        import winreg
+        with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Fonts\\") as key:
+            paths = []
+            info = winreg.QueryInfoKey(key)
+            fonts_root = get_windows_system_fonts_folder()
+            for index in range(info[1]):
+                value = winreg.EnumValue(key, index)
+                path = value[1] if os.path.isabs(value[1]) else os.path.join(fonts_root, value[1])
+                if is_supported_font(path):
+                    paths.append(path)
+        return paths
+
+
+    @staticmethod
+    def enumerate_system_fonts():
+        if sys.platform == 'win32':
+            return FontLoader.enumerate_windows_system_fonts()
+        else:
+            return FontLoader.enumerate_linux_system_fonts()
+
+
     @staticmethod
     def discard_cache():
         cache = FontLoader.get_font_cache_file_path()
         if os.path.exists(cache):
             os.remove(cache)
+
 
     @staticmethod
     def get_font_cache_file_path():

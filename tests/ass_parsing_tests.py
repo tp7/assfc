@@ -1,7 +1,8 @@
 from collections import defaultdict
+import logging
 import unittest
 from ass_parser import AssParser, StyleInfo, UsageData
-from tests.common import get_file_in_test_directory
+from tests.common import get_file_in_test_directory, disabled_logging
 
 class StyleInfoTests(unittest.TestCase):
     def test_equals_returns_true_on_equal_items(self):
@@ -125,7 +126,8 @@ class TagsParsingTests(unittest.TestCase):
         self.assertIsInstance(blocks[3], AssParser.AssBlockPlain)
 
     def test_treats_not_closed_override_block_as_plain_text(self):
-        blocks = AssParser.parse_tags(r'{\b1\b0blablabla')
+        with disabled_logging(logging.WARNING):
+            blocks = AssParser.parse_tags(r'{\b1\b0blablabla')
         self.assertIsInstance(blocks[0], AssParser.AssBlockPlain)
 
     def does_not_include_comments(self):
