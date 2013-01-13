@@ -14,7 +14,7 @@ Despite being written in Python it's still pretty fast, mostly thanks to [cachin
 
 You can find more information in project [wiki][wiki].
 
-It works only on Python 3.x (3.2 and 3.3 at least), Windows and Linux. 
+It works only on Python 3.x (3.2 and 3.3 at least), Windows, Linux and sometimes OS X (support is not guaranteed. Feel free to donate me a Macbook if you want it implemented)
 
 ### Contacts ###
 Feel free to submit any bugs or feature requests to `tp7` or `tonik` on `irc.rizon.net`, but preffered way is opening an issue here.
