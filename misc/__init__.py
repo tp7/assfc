@@ -57,20 +57,22 @@ def windows_enumerate_directory(directory, files):
     finally:
         FindClose(fldr)
 
-def read_linux_font_dirs():
-    linux_font_dir = compile(r"<dir>(.+?)</dir>")
-    with open('/etc/fonts/fonts.conf') as file:
-        return linux_font_dir.findall(file.read())
 
 APPNAME = "assfc"
 
 def get_app_data_folder():
-    if sys.platform == 'darwin':
-        raise NotImplementedError("OSX support not implemented yet")
-    elif sys.platform == 'win32':
+    if sys.platform == 'win32':
         appdata = os.path.join(os.environ['APPDATA'], APPNAME)
+    elif sys.platform == 'darwin':
+        from AppKit import NSSearchPathForDirectoriesInDomains
+        # http://developer.apple.com/DOCUMENTATION/Cocoa/Reference/Foundation/Miscellaneous/Foundation_Functions/Reference/reference.html#//apple_ref/c/func/NSSearchPathForDirectoriesInDomains
+        # NSApplicationSupportDirectory = 14
+        # NSUserDomainMask = 1
+        # True for expanding the tilde into a fully qualified path
+        appdata = os.path.join(NSSearchPathForDirectoriesInDomains(14, 1, True)[0], APPNAME)
     else:
         appdata = os.path.expanduser(os.path.join("~", "." + APPNAME))
+
     if not os.path.exists(appdata):
         os.mkdir(appdata)
     return appdata

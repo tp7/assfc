@@ -4,10 +4,11 @@ from fnmatch import fnmatch
 import logging
 import sys
 import pickle
+import re
 from font_loader.font_info import FontInfo, FontWeight
 from font_loader.ttf_parser import TTFFont
 from font_loader.ttc_parser import TTCFont
-from misc import get_app_data_folder, enumerate_files_in_directory, read_linux_font_dirs
+from misc import get_app_data_folder, enumerate_files_in_directory
 
 
 is_supported_font = lambda x: os.path.splitext(x)[1].lower() in {'.ttf', '.otf', '.ttc'}
@@ -122,10 +123,22 @@ class FontLoader(object):
 
     @staticmethod
     def enumerate_linux_system_fonts():
+        linux_font_dir = re.compile(r"<dir>(.+?)</dir>")
+        with open('/etc/fonts/fonts.conf') as file:
+            folders = linux_font_dir.findall(file.read())
         paths = []
-        for f in read_linux_font_dirs():
+        for f in folders:
             paths.extend(FontLoader.enumerate_font_files(f))
         return paths
+
+    @staticmethod
+    def enumerate_osx_system_fonts():
+        list_files = ['/System/Library/Fonts/fonts.list', '/Library/Fonts/fonts.list', '~/Library/Fonts/fonts.list', '/Network/Library/Fonts/fonts.list']
+        paths = set()
+        for list_file in list_files:
+            with open(list_file, 'r') as file:
+                paths.update(file.read().splitlines())
+        return list(paths)
 
 
     @staticmethod
@@ -147,6 +160,8 @@ class FontLoader(object):
     def enumerate_system_fonts():
         if sys.platform == 'win32':
             return FontLoader.enumerate_windows_system_fonts()
+        elif sys.platform == 'darwin':
+            return FontLoader.enumerate_osx_system_fonts()
         else:
             return FontLoader.enumerate_linux_system_fonts()
 
