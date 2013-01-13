@@ -25,8 +25,8 @@ class StyleInfo(object):
         return StyleInfo(self.fontname, self.bold, self.italic)
 
     @staticmethod
-    def from_ass(fontname, bold, italic):
-        return StyleInfo(fontname, bold == '-1', italic == '-1')
+    def from_ass(fontname, weight, italic):
+        return StyleInfo(fontname, 0 if weight == '0' else 1 if weight == '-1' else int(weight), italic == '-1')
 
 class UsageData(object):
     #styles refer to ASS styles defined globally
@@ -106,10 +106,12 @@ class AssParser(object):
                     style = styles[block.get_tag('r', event.style)].clone()
                     overriden = False
                 if 'b' in block.tags:
-                    style = StyleInfo(style.fontname, bool(block.get_tag('b', initial.bold)), style.italic)
+                    value = block.get_tag('b', initial.bold)
+                    bold = 0 if value == '0' else 1 if value == '1' else int(value)
+                    style = StyleInfo(style.fontname, bold, style.italic)
                     overriden = True
                 if 'i' in block.tags:
-                    style = StyleInfo(style.fontname, style.bold, bool(block.get_tag('i', initial.italic)))
+                    style = StyleInfo(style.fontname, style.bold, bool(int(block.get_tag('i', initial.italic))))
                     overriden = True
                 if 'fn' in block.tags:
                     style = StyleInfo(block.get_tag('fn', initial.fontname), style.bold, style.italic)

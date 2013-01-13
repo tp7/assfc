@@ -12,6 +12,7 @@ class IntegrationTests(unittest.TestCase):
         logging.basicConfig(level=logging.DEBUG)
 
         f = TTFFont(get_file_in_test_directory('YanoneKaffeesatz-Bold.otf'))
+        print(f.get_info().weight)
         f.print_headers()
 
         stat = AssParser.get_fonts_statistics(get_file_in_test_directory('3.ass'), True, True)

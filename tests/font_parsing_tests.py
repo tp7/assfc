@@ -8,26 +8,26 @@ from tests.common import get_file_in_test_directory
 class FontLoaderTests(unittest.TestCase):
     def test_returns_all_not_found_fonts(self):
         loader = FontLoader(None, True)
-        data = {StyleInfo('Jorvik', False, False) : UsageData(), StyleInfo('Random font', False, False) : UsageData()}
+        data = {StyleInfo('Jorvik', 0, False) : UsageData(), StyleInfo('Random font', 0, False) : UsageData()}
         found, not_found = loader.get_fonts_for_list(data)
         self.assertEqual(2, len(not_found))
 
     def test_returns_all_found_fonts(self):
         loader = FontLoader([get_file_in_test_directory('')], True)
-        data = {StyleInfo('Jorvik Informal V2', False, False) : UsageData(), StyleInfo('Random font', False, False) : UsageData()}
+        data = {StyleInfo('Jorvik Informal V2', 0, False) : UsageData(), StyleInfo('Random font', 0, False) : UsageData()}
         found, not_found = loader.get_fonts_for_list(data)
         self.assertEqual(1, len(found))
         self.assertIn('Jorvik Informal V2', list(found.values())[0].names)
 
     def test_performs_case_insensitive_search(self):
         loader = FontLoader([get_file_in_test_directory('')], True)
-        data = {StyleInfo('JoRvIk INFormAl v2', False, False) : UsageData()}
+        data = {StyleInfo('JoRvIk INFormAl v2', 0, False) : UsageData()}
         found, not_found = loader.get_fonts_for_list(data)
         self.assertEqual(1, len(found))
 
     def test_does_not_add_same_font_twice(self):
         loader = FontLoader([get_file_in_test_directory(''), get_file_in_test_directory('')], True)
-        data = {StyleInfo('Jorvik', False, False) : UsageData(), StyleInfo('Jorvik informal', False, False) : UsageData()}
+        data = {StyleInfo('Jorvik', 0, False) : UsageData(), StyleInfo('Jorvik informal', 0, False) : UsageData()}
         found, not_found = loader.get_fonts_for_list(data)
         self.assertEqual(1, len(found))
 
@@ -39,7 +39,7 @@ class FontLoaderTests(unittest.TestCase):
         loader = FontLoader(None, True)
         loader.fonts.append(FontInfo(['Arial'], False, False, FontWeight.FW_NORMAL, 'random', '1'))
         loader.fonts.append(FontInfo(['Arial Black'], False, False, FontWeight.FW_NORMAL, 'random', '2'))
-        data = {StyleInfo('Arial', False, False) : UsageData(), StyleInfo('Arial Black', False, False) : UsageData()}
+        data = {StyleInfo('Arial', 0, False) : UsageData(), StyleInfo('Arial Black', 0, False) : UsageData()}
         found, not_found = loader.get_fonts_for_list(data)
         self.assertEqual(2, len(found))
 
@@ -47,7 +47,7 @@ class FontLoaderTests(unittest.TestCase):
         loader = FontLoader(None, True)
         loader.fonts.append(FontInfo(['Arial'], False, False, FontWeight.FW_NORMAL, 'random', '1'))
         loader.fonts.append(FontInfo(['Arial Black'], False, False, FontWeight.FW_NORMAL, 'random', '2'))
-        data = {StyleInfo('Arial', False, False) : UsageData()}
+        data = {StyleInfo('Arial', 0, False) : UsageData()}
         found, not_found = loader.get_fonts_for_list(data)
         self.assertEqual(1, len(found))
 

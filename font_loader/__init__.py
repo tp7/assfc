@@ -46,7 +46,10 @@ class FontLoader(object):
                 continue
 
             for candidate in candidates:
-                if candidate.bold == font_info.bold and candidate.italic == font_info.italic:
+                if candidate.italic == font_info.italic and \
+                   ((font_info.bold == 1 and candidate.bold == True) or
+                   (font_info.bold == 0 and candidate.bold == False) or
+                   candidate.weight == font_info.bold):
                     best_candidate = candidate
                     logging.debug("Found exact match")
                     break

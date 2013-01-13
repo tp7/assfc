@@ -2,6 +2,7 @@ from collections import defaultdict
 import logging
 import unittest
 from ass_parser import AssParser, StyleInfo, UsageData
+from font_loader import FontWeight
 from tests.common import get_file_in_test_directory, disabled_logging
 
 class StyleInfoTests(unittest.TestCase):
@@ -40,13 +41,25 @@ class StyleInfoTests(unittest.TestCase):
         original = StyleInfo('font', False, False)
         new = original.clone()
         self.assertEqual(original, new)
-        original.bold = True
+        original.bold = 12
         self.assertNotEqual(original, new)
 
-    def test_from_ass_returns_compares_true_and_false_with_minus_one(self):
+    def test_from_ass_returns_italic_if_it_is_minus_one_in_script(self):
         item = StyleInfo.from_ass('font', '-123123123', '-1')
         self.assertTrue(item.italic)
-        self.assertFalse(item.bold)
+
+    def test_from_ass_returns_correct_weight_if_it_is_minus_one_in_script(self):
+        item = StyleInfo.from_ass('font', '-1', '-1')
+        self.assertEqual(item.bold, 1)
+
+    def test_from_ass_returns_correct_weight_if_it_is_zero_in_script(self):
+        item = StyleInfo.from_ass('font', '0', '-1')
+        self.assertEqual(item.bold, 0)
+
+    def test_from_ass_returns_correct_weight_if_it_number_in_script(self):
+        item = StyleInfo.from_ass('font', '123', '-1')
+        self.assertEqual(item.bold, 123)
+
 
 class AssBlockOverrideTests(unittest.TestCase):
     def test_does_not_include_blur(self):
@@ -138,7 +151,7 @@ class TagsParsingTests(unittest.TestCase):
 
 class EventProcessingTests(unittest.TestCase):
     def test_find_all_unique_plain_text_characters(self):
-        styles = {'style' : StyleInfo('Font', False, False)}
+        styles = {'style' : StyleInfo('Font', FontWeight.FW_NORMAL, False)}
         used_styles = defaultdict(UsageData)
         event = AssParser.AssEvent(1, 'style','randommmm' ,False)
         AssParser.process_event(event, used_styles, styles)
@@ -146,7 +159,7 @@ class EventProcessingTests(unittest.TestCase):
         self.assertSequenceEqual({'r','a', 'n', 'd','o','m'}, result.chars)
 
     def test_also_includes_spaces(self):
-        styles = {'style' : StyleInfo('Font', False, False)}
+        styles = {'style' : StyleInfo('Font', FontWeight.FW_NORMAL, False)}
         used_styles = defaultdict(UsageData)
         event = AssParser.AssEvent(1, 'style','ra ndo mm mm' ,False)
         AssParser.process_event(event, used_styles, styles)
@@ -154,7 +167,7 @@ class EventProcessingTests(unittest.TestCase):
         self.assertSequenceEqual({'r','a', 'n', ' ', 'd','o','m'}, result.chars)
 
     def test_does_not_include_new_lines(self):
-        styles = {'style' : StyleInfo('Font', False, False)}
+        styles = {'style' : StyleInfo('Font', FontWeight.FW_NORMAL, False)}
         used_styles = defaultdict(UsageData)
         event = AssParser.AssEvent(1, 'style',r'rardo\nmm\Nmm' ,False)
         AssParser.process_event(event, used_styles, styles)
@@ -162,12 +175,21 @@ class EventProcessingTests(unittest.TestCase):
         self.assertSequenceEqual({'r','a', 'd','o','m'}, result.chars)
 
     def test_replaces_h_with_tab(self):
-        styles = {'style' : StyleInfo('Font', False, False)}
+        styles = {'style' : StyleInfo('Font', FontWeight.FW_NORMAL, False)}
         used_styles = defaultdict(UsageData)
         event = AssParser.AssEvent(1, 'style',r'lolol\hlolol' ,False)
         AssParser.process_event(event, used_styles, styles)
         result = list(used_styles.values())[0]
         self.assertSequenceEqual({'l','o', "\xA0"}, result.chars)
+
+    def test_correctly_processes_double_font_italic_overrides(self):
+        styles = {'style' : StyleInfo('Font', 0, False)}
+        used_styles = defaultdict(UsageData)
+        event = AssParser.AssEvent(1, 'style',r'{\an5\blur1.1\fs90\pos(970,454)\1a&H12}She {\i1\b1}is{\i0\b0} annoying.' ,False)
+        AssParser.process_event(event, used_styles, styles)
+        self.assertEqual(len(used_styles), 2)
+
+
 
 class AssParsingTests(unittest.TestCase):
     def test_returns_correct_number_of_all_fonts_in_bakemono_script(self):
