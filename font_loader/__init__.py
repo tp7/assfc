@@ -133,12 +133,14 @@ class FontLoader(object):
 
     @staticmethod
     def enumerate_osx_system_fonts():
-        list_files = ['/System/Library/Fonts/fonts.list', '/Library/Fonts/fonts.list', '~/Library/Fonts/fonts.list', '/Network/Library/Fonts/fonts.list']
-        paths = set()
-        for list_file in list_files:
-            with open(list_file, 'r') as file:
-                paths.update(file.read().splitlines())
-        return list(paths)
+        folders = ['/System/Library/Fonts', '/Library/Fonts', '~/Library/Fonts', '/Network/Library/Fonts']
+        paths = []
+        for f in folders:
+            try:
+                paths.extend(FontLoader.enumerate_font_files(f))
+            except IOError:
+                logging.debug("Couldn't open directory %s" % f)
+        return paths
 
 
     @staticmethod
