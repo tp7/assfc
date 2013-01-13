@@ -64,7 +64,7 @@ def get_app_data_folder():
     if sys.platform == 'win32':
         appdata = os.path.join(os.environ['APPDATA'], APPNAME)
     elif sys.platform == 'darwin':
-        appdata = os.path.join(os.path.expanduser('~'),'/Library/Application Support', APPNAME)
+        appdata = os.path.join(os.path.expanduser('~'),'Library/Application Support', APPNAME)
     else:
         appdata = os.path.expanduser(os.path.join("~", "." + APPNAME))
 

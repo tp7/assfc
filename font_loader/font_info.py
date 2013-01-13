@@ -18,6 +18,7 @@ class FontInfo(object):
         return self.__md5
 
 class FontWeight(object):
+    FW_UNDEFINED = 0
     FW_THIN = 100
     FW_EXTRALIGHT = 200
     FW_LIGHT = 300

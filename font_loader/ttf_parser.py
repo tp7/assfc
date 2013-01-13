@@ -1,6 +1,7 @@
 from collections import namedtuple, defaultdict
 import logging
 import struct
+from font_loader import FontWeight
 from font_loader.font_info import FontInfo
 
 OffsetTable = namedtuple('OffsetTable', ['version', 'num_tables', 'search_range', 'entry_selector', 'range_shift'])
@@ -50,6 +51,7 @@ class TTFFont(object):
         self.headers = defaultdict(list)
         self.__bold = False
         self.__italic = False
+        self.__weight = FontWeight.FW_UNDEFINED
         self.__names = set()
         self.__path = path
         self.parse(self.__path, offset)
