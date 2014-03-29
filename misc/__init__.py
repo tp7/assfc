@@ -24,6 +24,7 @@ def enumerate_files_in_directory(directory):
     return files
 
 def linux_enumerate_directory(directory, files_collection):
+    directory = os.path.expanduser(directory)
     for path, subdirs, files in os.walk(directory):
         for name in files:
             files_collection.append(os.path.join(path, name))
