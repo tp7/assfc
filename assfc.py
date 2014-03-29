@@ -52,9 +52,12 @@ def set_logging(log_file, verbose):
         logging.getLogger('').addHandler(console)
 
 def create_mmg_command(mmg_path, output_path, script_path, fonts):
-    font_list = ('--attachment-mime-type application/x-truetype-font --attachment-name "{0}" --attach-file "{1}"'.format(os.path.basename(font.path), font.path) for font in fonts)
-    attachment_string = ' '.join(font_list)
-    return '{0} -o "{1}" "{2}" {3}'.format(os.path.abspath(mmg_path), os.path.abspath(output_path), os.path.abspath(script_path), attachment_string)
+    command_list = [os.path.abspath(mmg_path), '-o', os.path.abspath(output_path), os.path.abspath(script_path)]
+    for font in fonts:
+        command_list.extend(['--attachment-mime-type', 'application/x-truetype-font'])
+        command_list.extend(['--attachment-name', os.path.basename(font.path)])
+        command_list.extend(['--attach-file', font.path])
+    return command_list
 
 def create_mks_file(mmg_path, output_path, script_path, fonts):
     command = create_mmg_command(mmg_path, output_path, script_path, fonts)
