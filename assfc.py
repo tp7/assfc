@@ -52,7 +52,8 @@ def set_logging(log_file, verbose):
         logging.getLogger('').addHandler(console)
 
 def create_mmg_command(mmg_path, output_path, script_path, fonts):
-    command_list = [os.path.abspath(mmg_path), '-o', os.path.abspath(output_path), os.path.abspath(script_path)]
+    command_list = mmg_path
+    command_list.extend(['-o', os.path.abspath(output_path), os.path.abspath(script_path)])
     for font in fonts:
         command_list.extend(['--attachment-mime-type', 'application/x-truetype-font'])
         command_list.extend(['--attachment-name', os.path.basename(font.path)])
@@ -92,7 +93,7 @@ def process(args):
         FontLoader.discard_cache()
 
     collector = FontLoader(config['font_dirs'], config['include_system_fonts'])
-
+    
     found, not_found = collector.get_fonts_for_list(fonts)
 
     for font, usage in not_found.items():
@@ -110,9 +111,18 @@ def process(args):
     logging.info('Total found: %i', len(found))
     logging.info('Total not found: %i', len(not_found))
 
+    if config['mmg'] == 'guess':
+        if sys.platform == 'linux' or sys.platfrom == 'darwin':
+            mmg_path = ['/usr/bin/env', 'mkvmerge']
+        if sys.platform == 'windows':
+            raise NotImplementedError
+    else:
+        mmg_path = [os.path.abspath(config['mmg'])]
+
+
     if config['output_location'] is not None:
         if config['output_location'].endswith('.mks'):
-            create_mks_file(config['mmg'], config['output_location'], config['script'], found.values())
+            create_mks_file(mmg_path, config['output_location'], config['script'], found.values())
         else:
             copy_fonts_to_folder(config['output_location'], found.values())
 
