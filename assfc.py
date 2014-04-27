@@ -1,44 +1,48 @@
 #!/usr/bin/env python3
 
+from .font_loader import FontLoader
+from .ass_parser import AssParser
+
+from configparser import ConfigParser
+from shutil import copy2 as copyfile
+from time import ctime, time
+from subprocess import call
+
+import cProfile
 import argparse
 import logging
-from time import ctime, time
 import sys
-from ass_parser import AssParser
-from font_loader import FontLoader
 import os
-from json import JSONDecoder
-from subprocess import call
-import cProfile
-from shutil import copy2 as copyfile
 
-default_config = { "font_dirs":[],
-            "include_system_fonts":True,
-            "verbose":False,
-            "exclude_unused_fonts":False,
-            "exclude_comments":False,
-            "log_file":None}
+default_config = {
+    "font_dirs": "",
+    "include_system_fonts": True,
+    "verbose": False,
+    "exclude_unused_fonts": False,
+    "exclude_comments": False,
+    "log_file": None,
+}
 
 def get_script_directory():
     return os.path.dirname(__file__)
 
-def merge_configs(args, file, default):
-    config = dict(default)
-    config.update(file)
-    config.update(args.__dict__)
+def merge_configs(args, config):
+    args = ((k, v) for k, v in args.__dict__.items() if v is not None)
+    for arg, val in args:
+        if type(val) == bool:
+            config[arg] = 'yes' if val else 'no'
+        else:
+            config[arg] = str(val) if val != 'None' else None
 
-    for key, value in config.items():
-        if key not in {'output_location', 'additional_font_dirs'} and value is None:
-            config[key] = file[key] if key in file and file[key] is not None else default[key]
-    if config['additional_font_dirs']:
-        config['font_dirs'].extend(config['additional_font_dirs'])
+    if config.get('additional_font_dirs', False):
+        config['font_dirs'] = config['font_dirs'] + '\n' + '\n'.join(config['additional_font_dirs'])
     return config
 
 def get_config(args):
-    with open(os.path.join(get_script_directory(), "config.json")) as file:
-        file_text = file.read()
-    from_file = JSONDecoder().decode(file_text)
-    return merge_configs(args, from_file, default_config)
+    config = ConfigParser(default_config)
+    config.read(os.path.join(get_script_directory(), "config.ini"))
+    return merge_configs(args, config['assfc'])
+
 
 def set_logging(log_file, verbose):
     level = logging.DEBUG if verbose else logging.INFO
@@ -52,9 +56,15 @@ def set_logging(log_file, verbose):
         logging.getLogger('').addHandler(console)
 
 def create_mmg_command(mmg_path, output_path, script_path, fonts):
-    font_list = ('--attachment-mime-type application/x-truetype-font --attachment-name "{0}" --attach-file "{1}"'.format(os.path.basename(font.path), font.path) for font in fonts)
-    attachment_string = ' '.join(font_list)
-    return '{0} -o "{1}" "{2}" {3}'.format(os.path.abspath(mmg_path), os.path.abspath(output_path), os.path.abspath(script_path), attachment_string)
+    command_list = mmg_path
+    command_list.extend(['-o', os.path.abspath(output_path)])
+    command_list.extend(['--track-name', '0:[Shift]', '--language', '0:rus'])
+    command_list.extend([os.path.abspath(script_path)])
+    for font in fonts:
+        command_list.extend(['--attachment-mime-type', 'application/x-truetype-font'])
+        command_list.extend(['--attachment-name', os.path.basename(font.path)])
+        command_list.extend(['--attach-file', font.path])
+    return command_list
 
 def create_mks_file(mmg_path, output_path, script_path, fonts):
     command = create_mmg_command(mmg_path, output_path, script_path, fonts)
@@ -76,20 +86,23 @@ def copy_fonts_to_folder(folder, fonts):
 
 def process(args):
     config = get_config(args)
-    set_logging(config['log_file'], config['verbose'])
+    set_logging(config.get('log_file', None), config.getboolean('verbose'))
 
-    logging.debug(str(config))
+    logging.debug(str(dict(config)))
 
     start_time = time()
     logging.info('-----Started new task at %s-----' % str(ctime()))
 
-    fonts =  AssParser.get_fonts_statistics(os.path.abspath(config['script']), config['exclude_unused_fonts'], config['exclude_comments'])
+    fonts =  AssParser.get_fonts_statistics(os.path.abspath(config.get('script')), 
+                                            config.getboolean('exclude_unused_fonts'), 
+                                            config.getboolean('exclude_comments'))
 
-    if config['rebuild_cache']:
+    if config.getboolean('rebuild_cache'):
         FontLoader.discard_cache()
 
-    collector = FontLoader(config['font_dirs'], config['include_system_fonts'])
-
+    font_dirs =  [v.strip() for v in config.get('font_dirs').split('\n') if len(v)]
+    collector = FontLoader(font_dirs, config.getboolean('include_system_fonts'))
+    
     found, not_found = collector.get_fonts_for_list(fonts)
 
     for font, usage in not_found.items():
@@ -107,11 +120,20 @@ def process(args):
     logging.info('Total found: %i', len(found))
     logging.info('Total not found: %i', len(not_found))
 
-    if config['output_location'] is not None:
-        if config['output_location'].endswith('.mks'):
-            create_mks_file(config['mmg'], config['output_location'], config['script'], found.values())
+    if config.get('mmg') == 'guess':
+        if sys.platform == 'linux' or sys.platfrom == 'darwin':
+            mmg_path = ['/usr/bin/env', 'mkvmerge']
+        if sys.platform == 'windows':
+            raise NotImplementedError
+    else:
+        mmg_path = [os.path.abspath(config.get('mmg'))]
+
+
+    if config.get('output_location') is not None:
+        if config.get('output_location').endswith('.mks'):
+            create_mks_file(mmg_path, config.get('output_location'), config.get('script'), found.values())
         else:
-            copy_fonts_to_folder(config['output_location'], found.values())
+            copy_fonts_to_folder(config.get('output_location'), found.values())
 
     logging.debug('Job done in %fs' % round(time() - start_time, 5))
 
