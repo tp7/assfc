@@ -131,7 +131,7 @@ class FontLoader(object):
             if has_xdg:
                 f = (os.environ.get('XDG_FONT_DIRS') or f"{os.environ.get('XDG_DATA_HOME') or os.environ['HOME'] + '/.local/share'}") + f'/{f}'
             elif f.startswith('~'):
-               f = os.environ['HOME'] + f[1:]
+                f = os.environ['HOME'] + f[1:]
             paths.extend(FontLoader.enumerate_font_files(f))
         return paths
 
