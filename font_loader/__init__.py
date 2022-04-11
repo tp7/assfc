@@ -123,11 +123,15 @@ class FontLoader(object):
 
     @staticmethod
     def enumerate_linux_system_fonts():
-        linux_font_dir = re.compile(r"<dir>(.+?)</dir>")
+        linux_font_dir = re.compile(r'<dir( prefix="xdg")?>(.+?)</dir>')
         with open('/etc/fonts/fonts.conf') as file:
             folders = linux_font_dir.findall(file.read())
         paths = []
-        for f in folders:
+        for has_xdg, f in folders:
+            if has_xdg:
+                f = (os.environ.get('XDG_FONT_DIRS') or f"{os.environ.get('XDG_DATA_HOME') or os.environ['HOME'] + '/.local/share'}") + f'/{f}'
+            elif f.startswith('~'):
+               f = os.environ['HOME'] + f[1:]
             paths.extend(FontLoader.enumerate_font_files(f))
         return paths
 
